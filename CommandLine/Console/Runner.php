@@ -4,29 +4,24 @@ namespace Osio\Subscriptions\CommandLine\Console;
 
 use Exception;
 use Magento\Framework\Exception\AlreadyExistsException;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe as SubscribeResource;
 use Osio\Subscriptions\Model\Subscribe;
 use Osio\Subscriptions\Model\SubscribeFactory;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe as SubscribeResource;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+
 class Runner extends Command
 {
-    /**
-     * @param SubscribeFactory $subscribeFactory
-     * @param SubscribeResource $subscribeResource
-     * @param LoggerInterface $logger
-     * @param string|null $name
-     */
+
     public function __construct(
         private readonly SubscribeFactory  $subscribeFactory,
         private readonly SubscribeResource $subscribeResource,
         private readonly LoggerInterface   $logger,
         string                             $name = null
-    )
-    {
+    ) {
         parent::__construct($name);
     }
 

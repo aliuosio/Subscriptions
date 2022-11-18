@@ -13,23 +13,18 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class Place
 {
+
     public function __construct(
-        Context $context,
-        StoreManagerInterface $storeManager,
-        CustomerFactory $customerFactory,
-        ProductRepositoryInterface $productRepository,
+        Context                     $context,
+        StoreManagerInterface       $storeManager,
+        CustomerFactory             $customerFactory,
+        ProductRepositoryInterface  $productRepository,
         CustomerRepositoryInterface $customerRepository,
-        QuoteFactory $quote,
-        QuoteManagement $quoteManagement,
-        OrderSender $orderSender
-    ) {
-        $this->storeManager = $storeManager;
-        $this->customerFactory = $customerFactory;
-        $this->productRepository = $productRepository;
-        $this->customerRepository = $customerRepository;
-        $this->quote = $quote;
-        $this->quoteManagement = $quoteManagement;
-        $this->orderSender = $orderSender;
+        QuoteFactory                $quote,
+        QuoteManagement             $quoteManagement,
+        OrderSender                 $orderSender
+    )
+    {
     }
 
     /*
