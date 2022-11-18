@@ -1,0 +1,20 @@
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="subscriptions">
+        <column name="id" xsi:type="int" padding="10" unsigned="true" nullable="false" identity="true"
+                comment="Entity Id"/>
+        <column name="item_id" xsi:type="int" padding="10" unsigned="true" nullable="false"
+                comment="Table sales_order_item"/>
+        <column name="period" xsi:type="int" nullable="false" comment="period in days"/>
+        <column name="next_order_date" xsi:type="datetime" nullable="false" comment="next date order created "/>
+        <column name="last_order_date" xsi:type="datetime" nullable="false" comment="last date order created "/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_SUBSCRIPTIONS_ITEM_ID" table="subscriptions" column="item_id"
+                    referenceTable="sales_order_item" referenceColumn="item_id"/>
+        <index referenceId="INDEX_ITEM_ID" indexType="btree">
+            <column name="item_id"/>
+        </index>
+    </table>
+</schema>
