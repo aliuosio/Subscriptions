@@ -36,7 +36,7 @@ class Runner extends Command
     }
 
     /**
-     * @inheritDoc“
+     * @inheritDoc
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
