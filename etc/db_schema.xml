@@ -14,11 +14,7 @@
         <constraint xsi:type="foreign" referenceId="FK_SUBSCRIPTIONS_ITEM_ID" table="subscriptions" column="item_id"
                     referenceTable="sales_order_item" referenceColumn="item_id"/>
         <constraint xsi:type="unique" referenceId="UNIQUE_ITEM_ID">
-
             <column name="item_id"/>
         </constraint>
-        <index referenceId="INDEX_ITEM_ID" indexType="btree">
-            <column name="item_id"/>
-        </index>
     </table>
 </schema>
