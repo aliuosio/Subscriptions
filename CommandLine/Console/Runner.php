@@ -21,7 +21,8 @@ class Runner extends Command
         private readonly SubscribeResource $subscribeResource,
         private readonly LoggerInterface   $logger,
         string                             $name = null
-    ) {
+    )
+    {
         parent::__construct($name);
     }
 
