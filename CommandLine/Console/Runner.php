@@ -7,7 +7,7 @@ use Magento\Framework\Exception\AlreadyExistsException;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe as SubscribeResource;
 use Osio\Subscriptions\Model\Subscribe;
 use Osio\Subscriptions\Model\SubscribeFactory;
-use Psr\Log\LoggerInterface;
+use Osio\Subscriptions\Logger\Logger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
