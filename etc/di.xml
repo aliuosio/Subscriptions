@@ -4,7 +4,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Sales\Api\OrderManagementInterface">
         <plugin name="after_place_order_operation"
-                type="Osio\Subscriptions\Plugins\SaveSubscriptions"/>
+                type="Osio\Subscriptions\Plugins\Model\SaveSubscriptions"/>
     </type>
     <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>

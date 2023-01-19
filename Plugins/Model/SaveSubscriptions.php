@@ -1,6 +1,6 @@
 <?php
 
-namespace Osio\Subscriptions\Plugins;
+namespace Osio\Subscriptions\Plugins\Model;
 
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderManagementInterface;
