@@ -6,19 +6,17 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Psr\Log\LoggerInterface;
 
-class SaveSubscriptions
+class OrderManagementInterfacePlugin
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-    )
-    {
+    ) {
     }
 
     public function afterPlace(
         OrderManagementInterface $orderManagement,
         OrderInterface $order
-    ): OrderInterface
-    {
+    ): OrderInterface {
         $this->logger->info('TEST BEFORE');
         if ($order->getIncrementId()) {
             $this->logger->info('TEST AFTER');
