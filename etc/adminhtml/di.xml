@@ -2,9 +2,9 @@
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Catalog\Api\ProductRepositoryInterface">
+    <type name="Magento\Catalog\Model\ProductRepository">
         <plugin name="osio_before_product_save"
-                type="Osio\Subscriptions\Plugins\Model\ProductRepositoryPlugin"/>
+                type="Osio\Subscriptions\Plugins\Catalog\Model\ProductSave"/>
     </type>
     <!--
     <type name="Magento\Sales\Api\OrderManagementInterface">
