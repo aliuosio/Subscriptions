@@ -4,7 +4,7 @@
   "description": "N/A",
   "type": "magento2-module",
   "require": {
-    "magento/framework": "*"
+    "magento/module-catalog": "*"
   },
   "license": [
     "Massachusetts Institute of Technology License (MITL)"
