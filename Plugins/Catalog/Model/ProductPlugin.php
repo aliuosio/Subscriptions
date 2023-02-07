@@ -24,54 +24,51 @@ class ProductPlugin
     public function beforeSave(Product $product): void
     {
         if ($product->getData('subscribable')) {
-            $test = 1;
-            $product->setData('has_options', true);
-            $this->option->setProductId($product->getId())
-                ->setData('store_id', $product->getStoreId())
-                ->addData($this->myCustomOptions());
-            $product->addOption($this->option);
+            $this->addCustomOption($product);
         }
     }
 
-    private function myCustomOptions(): array
+    public function addCustomOption(Product $product)
     {
-        $values = [
+        $optionsArray = [
             [
-                'title' => 'Red',
-                'price' => 10,
-                'price_type' => "fixed",
+                'title' => 'Select option',
+                'type' => 'drop_down',
+                'is_require' => 1,
                 'sort_order' => 1,
-                'is_delete' => 0,
-                'option_type_id' => -1,
-            ],
-            [
-                'title' => 'White',
-                'price' => 10,
-                'price_type' => "fixed",
-                'sort_order' => 1,
-                'is_delete' => 0,
-                'option_type_id' => -1,
-            ],
-            [
-                'title' => 'Black',
-                'price' => 10,
-                'price_type' => "fixed",
-                'sort_order' => 1,
-                'is_delete' => 0,
-                'option_type_id' => -1,
+                'values' => [
+                    [
+                        'title' => 'Option 1',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'Option 1 sku',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'title' => 'Option 2',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'Option 2 sku',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'title' => 'Option 3',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'Option 3 sku',
+                        'sort_order' => 3,
+                    ],
+                ],
             ]
         ];
 
-        return [
-            [
-                "sort_order" => 2,
-                "title" => "period",
-                "price_type" => "fixed",
-                "price" => "",
-                "type" => "drop_down",
-                "is_require" => 0,
-                "values" => $values
-            ]
-        ];
+        foreach ($optionsArray as $optionValue) {
+            $option = $this->option
+                ->setProductId($product->getId())
+                ->setIsRequire(false)
+                ->addData($optionValue);
+            $option->save();
+            $product->addOption($option);
+        }
     }
 }
