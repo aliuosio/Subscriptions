@@ -21,7 +21,7 @@ use Zend_Validate_Exception;
 
 class IsProductSubscribable implements DataPatchInterface
 {
-    private const SUBSCRIBABLE = 'subscribable';
+    public const NAME = 'subscribable';
 
     private EavSetupFactory $eavSetupFactory;
     private ModuleDataSetupInterface $moduleDataSetup;
@@ -69,11 +69,11 @@ class IsProductSubscribable implements DataPatchInterface
         try {
             $eavSetup->addAttribute(
                 Product::ENTITY,
-                IsProductSubscribable::SUBSCRIBABLE,
+                IsProductSubscribable::NAME,
                 [
                     'type' => 'int',
                     'group' => 'General',
-                    'label' => IsProductSubscribable::SUBSCRIBABLE,
+                    'label' => IsProductSubscribable::NAME,
                     'input' => 'boolean',
                     'source' => Boolean::class,
                     'sort_order' => 10,
@@ -98,7 +98,7 @@ class IsProductSubscribable implements DataPatchInterface
                     Product::ENTITY,
                     $attributeSetId,
                     $this->config->getAttributeGroupId((int) $attributeSetId, 'Product Details'),
-                    IsProductSubscribable::SUBSCRIBABLE,
+                    IsProductSubscribable::NAME,
                     10
                 );
             } catch (InputException | NoSuchEntityException $e) {
