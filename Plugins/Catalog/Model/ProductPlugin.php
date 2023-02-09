@@ -2,6 +2,7 @@
 
 namespace Osio\Subscriptions\Plugins\Catalog\Model;
 
+use Magento\Catalog\Api\ProductCustomOptionRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\OptionFactory;
 use Magento\Catalog\Model\Product\Option\Repository;
@@ -19,13 +20,12 @@ class ProductPlugin
     private OptionFactory $optionFactroy;
     private Repository $optionRepository;
 
-    public function __construct(ScopeConfigInterface $scopeConfig, OptionFactory $optionFactory, Repository $optionRepository)
+    public function __construct(ScopeConfigInterface $scopeConfig, OptionFactory $optionFactory, ProductCustomOptionRepositoryInterface $optionRepository)
     {
         $this->scopeConfig = $scopeConfig;
         $this->optionFactroy = $optionFactory;
         $this->optionRepository = $optionRepository;
     }
-
 
     /**
      * @throws NoSuchEntityException
