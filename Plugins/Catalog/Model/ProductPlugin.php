@@ -3,21 +3,26 @@
 namespace Osio\Subscriptions\Plugins\Catalog\Model;
 
 use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Model\Product\OptionFactory;
 
 class ProductPlugin
 {
-    private Option $option;
+    private OptionFactory $optionFactory;
 
-    public function __construct(Option $option)
+    public function __construct(OptionFactory $optionFactory)
     {
-        $this->option = $option;
+        $this->optionFactory = $optionFactory;
+    }
+
+    private function getOption()
+    {
+        return $this->optionFactory->create();
     }
 
     public function beforeSave(Product $product): void
     {
-        $this->option->addData($this->getCustomOptions($product));
-        $product->addOption($this->option);
+        $this->getOption()->addData($this->getCustomOptions($product));
+        $product->addOption($this->getOption());
         $product->setData('has_options', true);
     }
 
@@ -40,4 +45,5 @@ class ProductPlugin
             ]
         ];
     }
+
 }
