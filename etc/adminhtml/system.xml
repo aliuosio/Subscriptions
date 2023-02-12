@@ -21,7 +21,7 @@
                 <field id="periods" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Periods</label>
-                    <comment>set the periods seperated by comma</comment>
+                    <comment>set the periods seperated by comma in weeks</comment>
                     <depends>
                         <field id="*/*/active">1</field>
                     </depends>

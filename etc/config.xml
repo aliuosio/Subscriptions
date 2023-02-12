@@ -12,7 +12,7 @@
         <system>
             <subscribable>
                 <active>0</active>
-                <periods>14,28,42,56</periods>
+                <periods>1,2,3,4</periods>
             </subscribable>
         </system>
     </default>
