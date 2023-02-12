@@ -2,99 +2,42 @@
 
 namespace Osio\Subscriptions\Plugins\Catalog\Model;
 
-use Magento\Catalog\Api\ProductCustomOptionRepositoryInterface;
 use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\OptionFactory;
-use Magento\Catalog\Model\Product\Option\Repository;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Exception\CouldNotSaveException;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Osio\Subscriptions\Setup\Patch\Data\IsProductSubscribable;
+use Magento\Catalog\Model\Product\Option;
 
 class ProductPlugin
 {
-    const ENABLED = 'system/subscribable/active';
-    const PERIODS = 'system/subscribable/periods';
+    private Option $option;
 
-    private ScopeConfigInterface $scopeConfig;
-    private OptionFactory $optionFactroy;
-    private Repository $optionRepository;
-
-    public function __construct(ScopeConfigInterface $scopeConfig, OptionFactory $optionFactory, ProductCustomOptionRepositoryInterface $optionRepository)
+    public function __construct(Option $option)
     {
-        $this->scopeConfig = $scopeConfig;
-        $this->optionFactroy = $optionFactory;
-        $this->optionRepository = $optionRepository;
+        $this->option = $option;
     }
 
-    /**
-     * @throws NoSuchEntityException
-     * @throws CouldNotSaveException
-     */
     public function beforeSave(Product $product): void
     {
-        if ($product->getData(IsProductSubscribable::NAME) && $this->scopeConfig->getValue(ProductPlugin::ENABLED)) {
-            $this->addCustomOption($product);
-        }
+        $this->option->addData($this->getCustomOptions($product));
+        $product->addOption($this->option);
+        $product->setData('has_options', true);
     }
 
-    private function getOption()
-    {
-        return $this->optionFactroy->create();
-    }
-
-    /**
-     * @param Product $product
-     * @return void
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
-    public function addCustomOption(Product $product)
-    {
-
-        foreach ($this->getOptionsArray() as $optionValue) {
-            $this->getOption()->setProductId($product->getId())
-                ->setIsRequire(false)
-                ->addData($optionValue);
-            $this->optionRepository->save($this->getOption());
-
-            $product->addOption($this->getOption());
-        }
-    }
-
-    private function getOptionsArray(): array
+    private function getCustomOptions(Product $product): array
     {
         return [
-            [
-                'title' => 'Select option',
-                'type' => 'drop_down',
-                'is_require' => 0,
-                'sort_order' => 1,
-                'values' => [
-                    [
-                        'title' => 'Option 100',
-                        'price' => 10,
-                        'price_type' => 'fixed',
-                        'sku' => 'Option 1 sku',
-                        'sort_order' => 1,
-                    ],
-                    [
-                        'title' => 'Option 200',
-                        'price' => 10,
-                        'price_type' => 'fixed',
-                        'sku' => 'Option 2 sku',
-                        'sort_order' => 2,
-                    ],
-                    [
-                        'title' => 'Option 300',
-                        'price' => 10,
-                        'price_type' => 'fixed',
-                        'sku' => 'Option 3 sku',
-                        'sort_order' => 3,
-                    ],
-                ],
+            "sort_order" => 1,
+            "title" => "Custom Options",
+            "price_type" => "fixed",
+            "price" => "",
+            "type" => "drop_down",
+            "is_require" => false,
+            "product_id" => $product->getData('id'),
+            "sku" => $product->getData('sku'),
+            "store_id" => $product->getData('store_id'),
+            "values" => [
+                ["title" => "Option 1", "price" => 10, "price_type" => "fixed", "sort_order" => 1],
+                ["title" => "Option 2", "price" => 20, "price_type" => "fixed", "sort_order" => 2],
+                ["title" => "Option 3", "price" => 30, "price_type" => "fixed", "sort_order" => 30]
             ]
         ];
-
     }
 }
