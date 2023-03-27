@@ -1,22 +1,26 @@
 <?php
+/**
+ * Copyright © dev-hh, Inc. All rights reserved.
+ * See LICENSE.TXT for license details.
+ */
 
 namespace Osio\Subscriptions\Plugins;
 
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Option;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 
 class SetSubscribeProductOptions
 {
 
 
-    private Option $option;
+    private ProductCustomOptionInterface $option;
 
-    public function __construct(Option $option)
+    public function __construct(ProductCustomOptionInterface $option)
     {
         $this->option = $option;
     }
 
-    public function beforeSave(Product $product): array
+    public function beforeSave(ProductInterface $product): array
     {
         $this->option->addData($this->getCustomOptions($product));
         $product->addOption($this->option);
@@ -25,7 +29,7 @@ class SetSubscribeProductOptions
         return [];
     }
 
-    private function getCustomOptions(Product $product): array
+    private function getCustomOptions(ProductInterface $product): array
     {
         return [
             'sort_order' => 1,
@@ -34,8 +38,8 @@ class SetSubscribeProductOptions
             'price' => '',
             'type' => 'drop_down',
             'is_require' => false,
-            'product_id' => $product->getData('id'),
-            'sku' => $product->getData('sku'),
+            'product_id' => $product->getId(),
+            'sku' => $product->getSku(),
             'store_id' => $product->getData('store_id'),
             'values' => [
                 [
