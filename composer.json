@@ -4,7 +4,20 @@
   "description": "N/A",
   "type": "magento2-module",
   "require": {
-    "magento/framework": "*"
+    "php": "~8.1.0",
+    "magento/framework": "103.0.*",
+    "magento/module-backend": "102.0.*",
+    "magento/module-catalog": "104.0.*",
+    "magento/module-checkout": "100.4.*",
+    "magento/module-config": "101.2.*",
+    "magento/module-customer": "103.0.*",
+    "magento/module-directory": "100.4.*",
+    "magento/module-eav": "102.1.*",
+    "magento/module-payment": "100.4.*",
+    "magento/module-quote": "101.2.*",
+    "magento/module-sales-sequence": "100.4.*",
+    "magento/module-shipping": "100.4.*",
+    "magento/module-store": "101.1.*"
   },
   "license": [
     "Massachusetts Institute of Technology License (MITL)"
