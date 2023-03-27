@@ -1,25 +1,30 @@
 <?php
 /**
- * Copyright © dev-hh, Inc. All rights reserved.
+ * Copyright © DEVHH, Inc. All rights reserved.
  * See LICENSE.TXT for license details.
  */
 
 namespace Osio\Subscriptions\Plugins;
 
-use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 
 class SetSubscribeProductOptions
 {
-
-
     private ProductCustomOptionInterface $option;
 
+    /**
+     * @param ProductCustomOptionInterface $option
+     */
     public function __construct(ProductCustomOptionInterface $option)
     {
         $this->option = $option;
     }
 
+    /**
+     * @param ProductInterface $product
+     * @return array{}
+     */
     public function beforeSave(ProductInterface $product): array
     {
         $this->option->addData($this->getCustomOptions($product));
@@ -29,6 +34,10 @@ class SetSubscribeProductOptions
         return [];
     }
 
+    /**
+     * @param ProductInterface $product
+     * @return array{sort_order: integer}
+     */
     private function getCustomOptions(ProductInterface $product): array
     {
         return [
