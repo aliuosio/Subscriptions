@@ -11,6 +11,7 @@
     <default>
         <system>
             <subscribable>
+                <title>Subscription</title>
                 <active>0</active>
                 <periods>1,2,3,4</periods>
             </subscribable>
