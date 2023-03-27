@@ -28,11 +28,13 @@ class SetSubscribeProductOptions
      */
     public function beforeSave(ProductInterface $product): array
     {
+        /**
         $this->option->addData(
             $this->getCustomOptions($product, $this->getTitle(), $this->getValues())
         );
         $product->addOption($this->option)
             ->setData('has_options', true);
+        **/
 
         return [];
     }
