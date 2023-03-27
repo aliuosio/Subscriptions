@@ -1,12 +1,13 @@
 <?php
 
-namespace Osio\Subscriptions\Plugins\Catalog\Model;
+namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Option;
 
-class ProductPlugin
+class SetSubscribeProductOptions
 {
+
 
     private Option $option;
 
@@ -28,35 +29,34 @@ class ProductPlugin
     {
         return [
             'sort_order' => 1,
-            'title'      => 'Custom Options',
+            'title' => 'Custom Options',
             'price_type' => 'fixed',
-            'price'      => '',
-            'type'       => 'drop_down',
+            'price' => '',
+            'type' => 'drop_down',
             'is_require' => false,
             'product_id' => $product->getData('id'),
-            'sku'        => $product->getData('sku'),
-            'store_id'   => $product->getData('store_id'),
-            'values'     => [
+            'sku' => $product->getData('sku'),
+            'store_id' => $product->getData('store_id'),
+            'values' => [
                 [
-                    'title'      => 'Option 1',
-                    'price'      => 10,
+                    'title' => 'Option 1',
+                    'price' => 10,
                     'price_type' => 'fixed',
                     'sort_order' => 1,
                 ],
                 [
-                    'title'      => 'Option 2',
-                    'price'      => 20,
+                    'title' => 'Option 2',
+                    'price' => 20,
                     'price_type' => 'fixed',
                     'sort_order' => 2,
                 ],
                 [
-                    'title'      => 'Option 3',
-                    'price'      => 30,
+                    'title' => 'Option 3',
+                    'price' => 30,
                     'price_type' => 'fixed',
                     'sort_order' => 30,
                 ],
             ],
         ];
     }
-
 }
