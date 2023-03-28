@@ -22,6 +22,7 @@ class SetSubscribeProductOptions
 
     public function beforeSave(ProductInterface $product): void
     {
+        $enabled = $this->helper->isEnabled();
         if ($this->helper->isEnabled()) {
             $t = 1;
             /**

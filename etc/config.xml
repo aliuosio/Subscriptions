@@ -12,7 +12,7 @@
         <system>
             <subscribable>
                 <title>Subscription</title>
-                <active>0</active>
+                <enabled>0</enabled>
                 <periods>1,2,3,4</periods>
             </subscribable>
         </system>
