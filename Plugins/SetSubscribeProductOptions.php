@@ -12,36 +12,29 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class SetSubscribeProductOptions
 {
-
-
     const TITLE = 'system/subscribable/title';
     const PERIODS = 'system/subscribable/periods';
+    const ENABLED = 'system/subscribable/enabled';
 
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ScopeConfigInterface         $scopeConfig
     ) {}
 
-    /**
-     * @param ProductInterface $product
-     * @return array{}
-     */
     public function beforeSave(ProductInterface $product): array
     {
-        /**
+        if ($this->scopeConfig->getValue(self::ENABLED) == 0) {
+            return [];
+        }
+
         $this->option->addData(
             $this->getCustomOptions($product, $this->getTitle(), $this->getValues())
         );
-        $product->addOption($this->option)
-            ->setData('has_options', true);
-        **/
+        $product->addOption($this->option)->setData('has_options', true);
 
         return [];
     }
 
-    /**
-     * @return array
-     */
     private function getValues(): array
     {
         return [
@@ -66,20 +59,11 @@ class SetSubscribeProductOptions
         ];
     }
 
-    /**
-     * @return mixed
-     */
     private function getTitle(): mixed
     {
         return $this->scopeConfig->getValue(self::TITLE);
     }
 
-    /**
-     * @param ProductInterface $product
-     * @param mixed $title
-     * @param array $values
-     * @return array
-     */
     private function getCustomOptions(ProductInterface $product, mixed $title, array $values): array
     {
         return [
@@ -96,11 +80,4 @@ class SetSubscribeProductOptions
         ];
     }
 
-    /**
-     * @return array
-     */
-    public function getCustomOptionValues(): array
-    {
-        return explode(',', $this->scopeConfig->getValue(self::PERIODS));
-    }
 }
