@@ -15,16 +15,21 @@ class SetSubscribeProductOptions
 
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
-        private readonly Helper $helper
-    ) {}
+        private readonly Helper                       $helper
+    )
+    {
+    }
 
     public function beforeSave(ProductInterface $product): void
     {
         if ($this->helper->isEnabled()) {
-            $this->option->addData(
-                $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
-            );
-            $product->addOption($this->option)->setData('has_options', true);
+            $t = 1;
+            /**
+             * $this->option->addData(
+             * $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
+             * );
+             * $product->addOption($this->option)->setData('has_options', true);
+             * */
         }
     }
 
