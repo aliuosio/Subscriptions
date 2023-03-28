@@ -8,31 +8,24 @@ namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Osio\Subscriptions\Helper\Data as Helper;
 
 class SetSubscribeProductOptions
 {
-    const TITLE = 'system/subscribable/title';
-    const PERIODS = 'system/subscribable/periods';
-    const ENABLED = 'system/subscribable/enabled';
 
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
-        private readonly ScopeConfigInterface         $scopeConfig
+        private readonly Helper $helper
     ) {}
 
-    public function beforeSave(ProductInterface $product): array
+    public function beforeSave(ProductInterface $product): void
     {
-        if ($this->scopeConfig->getValue(self::ENABLED) == 0) {
-            return [];
+        if ($this->helper->isEnabled()) {
+            $this->option->addData(
+                $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
+            );
+            $product->addOption($this->option)->setData('has_options', true);
         }
-
-        $this->option->addData(
-            $this->getCustomOptions($product, $this->getTitle(), $this->getValues())
-        );
-        $product->addOption($this->option)->setData('has_options', true);
-
-        return [];
     }
 
     private function getValues(): array
@@ -57,11 +50,6 @@ class SetSubscribeProductOptions
                 'sort_order' => 30,
             ],
         ];
-    }
-
-    private function getTitle(): mixed
-    {
-        return $this->scopeConfig->getValue(self::TITLE);
     }
 
     private function getCustomOptions(ProductInterface $product, mixed $title, array $values): array
