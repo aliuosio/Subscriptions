@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Setup\Patch\Schema;
+namespace Osio\Subscriptions\Setup\Patch\Data;
 
 use Magento\Catalog\Model\Config;
 use Magento\Catalog\Model\Product;
@@ -21,15 +21,26 @@ use Zend_Validate_Exception;
 
 class IsProductSubscribable implements DataPatchInterface
 {
-    private const SUBSCRIBABLE = 'subscribable';
+    public const NAME = 'subscribable';
+
+    private EavSetupFactory $eavSetupFactory;
+    private ModuleDataSetupInterface $moduleDataSetup;
+    private AttributeManagementInterface $attributeManagement;
+    private Config $config;
+    private LoggerInterface $logger;
 
     public function __construct(
-        private readonly EavSetupFactory $eavSetupFactory,
-        private readonly ModuleDataSetupInterface $moduleDataSetup,
-        private readonly Config $config,
-        private readonly AttributeManagementInterface $attributeManagement,
-        private readonly LoggerInterface $logger,
+        EavSetupFactory $eavSetupFactory,
+        ModuleDataSetupInterface $moduleDataSetup,
+        Config $config,
+        AttributeManagementInterface $attributeManagement,
+        LoggerInterface $logger,
     ) {
+        $this->logger = $logger;
+        $this->config = $config;
+        $this->attributeManagement = $attributeManagement;
+        $this->moduleDataSetup = $moduleDataSetup;
+        $this->eavSetupFactory = $eavSetupFactory;
     }
 
     /**
@@ -58,10 +69,11 @@ class IsProductSubscribable implements DataPatchInterface
         try {
             $eavSetup->addAttribute(
                 Product::ENTITY,
-                IsProductSubscribable::SUBSCRIBABLE,
+                IsProductSubscribable::NAME,
                 [
                     'type' => 'int',
-                    'label' => IsProductSubscribable::SUBSCRIBABLE,
+                    'group' => 'General',
+                    'label' => IsProductSubscribable::NAME,
                     'input' => 'boolean',
                     'source' => Boolean::class,
                     'sort_order' => 10,
@@ -69,14 +81,11 @@ class IsProductSubscribable implements DataPatchInterface
                     'visible' => true,
                     'required' => false,
                     'default' => '0',
-                    'backend' => '',
-                    'frontend' => '',
-                    'class' => '',
                     'user_defined' => true,
                     'searchable' => false,
                     'filterable' => true,
                     'visible_on_front' => true,
-                    'used_in_product_listing' => true
+                    'used_in_product_listing' => true,
                 ]
             );
         } catch (LocalizedException | Zend_Validate_Exception $e) {
@@ -89,7 +98,7 @@ class IsProductSubscribable implements DataPatchInterface
                     Product::ENTITY,
                     $attributeSetId,
                     $this->config->getAttributeGroupId((int) $attributeSetId, 'Product Details'),
-                    IsProductSubscribable::SUBSCRIBABLE,
+                    IsProductSubscribable::NAME,
                     10
                 );
             } catch (InputException | NoSuchEntityException $e) {
