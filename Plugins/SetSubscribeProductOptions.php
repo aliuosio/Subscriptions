@@ -1,8 +1,4 @@
 <?php
-/**
- * Copyright © DEVHH, Inc. All rights reserved.
- * See LICENSE.TXT for license details.
- */
 
 namespace Osio\Subscriptions\Plugins;
 
@@ -12,25 +8,19 @@ use Osio\Subscriptions\Helper\Data as Helper;
 
 class SetSubscribeProductOptions
 {
-
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
         private readonly Helper                       $helper
-    )
-    {
+    ) {
     }
 
     public function beforeSave(ProductInterface $product): void
     {
-        $enabled = $this->helper->isEnabled();
-        if ($this->helper->isEnabled()) {
-            $t = 1;
-            /**
-             * $this->option->addData(
-             * $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
-             * );
-             * $product->addOption($this->option)->setData('has_options', true);
-             * */
+        if ($this->helper->isEnabled() && $this->helper->isOptionFlagSet()) {
+            $this->option->addData(
+                $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
+            );
+            $product->addOption($this->option)->setData('has_options', true);
         }
     }
 
@@ -73,5 +63,4 @@ class SetSubscribeProductOptions
             'values' => $values,
         ];
     }
-
 }

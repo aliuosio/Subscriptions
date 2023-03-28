@@ -21,6 +21,10 @@ class Data extends AbstractHelper
         parent::__construct($context);
     }
 
+    public function isOptionFlagSet() {
+        return (bool) $this->_getRequest()->getParam('product')['subscribable'];
+    }
+
     public function isEnabled(): bool
     {
         return $this->scopeConfig->getValue(self::ENABLED) == 1;
