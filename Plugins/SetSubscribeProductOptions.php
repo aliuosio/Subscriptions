@@ -16,12 +16,18 @@ class SetSubscribeProductOptions
 
     public function beforeSave(ProductInterface $product): void
     {
-        if ($this->helper->isEnabled() && $this->helper->isOptionFlagSet()) {
+        if (!$this->helper->isEnabled()) {
+            return;
+        }
+
+        /*
+        if ($this->helper->isOptionFlagSet()) {
             $this->option->addData(
                 $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
             );
             $product->addOption($this->option)->setData('has_options', true);
         }
+        */
     }
 
     private function getValues(): array
