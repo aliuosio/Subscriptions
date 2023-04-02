@@ -19,30 +19,33 @@ class SetSubscribeProductOptions
         if (!$this->helper->isEnabled()) {
             return;
         }
-
-        if ($this->helper->isOptionFlagSet() && !$this->hasThisOption($product)) {
+        $hasOption = $this->hasThisOption($product->getOptions());
+        if ($this->helper->isOptionFlagSet() && !$this->hasThisOption($product->getOptions())) {
             $this->addOption($product);
         } else {
             $this->removeOption($product);
         }
     }
 
-    private function hasThisOption(ProductInterface $product): bool
+    private function hasThisOption($options): bool
     {
-        return (bool)count($product->getOptions()[$this->helper->getTitle()]);
+        foreach ($options as $option) {
+            if ($option->getTitle() == $this->helper->getTitle()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private function unsetOption(ProductInterface $product): array
+    private function removeOption($options): void
     {
-        $options = $product->getOptions();
-        unset($options[$this->helper->getTitle()]);
-
-        return $options;
-    }
-
-    private function removeOption(ProductInterface $product): void
-    {
-        $product->setOptions($this->unsetOption($product));
+        foreach ($options as $option) {
+            if ($option->getTitle() == $this->helper->getTitle()) {
+                $option->delete();
+                break;
+            }
+        }
     }
 
     private function addOption(ProductInterface $product): void
