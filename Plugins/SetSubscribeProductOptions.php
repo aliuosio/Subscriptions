@@ -20,14 +20,37 @@ class SetSubscribeProductOptions
             return;
         }
 
-        /*
-        if ($this->helper->isOptionFlagSet()) {
-            $this->option->addData(
-                $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
-            );
-            $product->addOption($this->option)->setData('has_options', true);
+        if ($this->helper->isOptionFlagSet() && !$this->hasThisOption($product)) {
+            $this->addOption($product);
+        } else {
+            $this->removeOption($product);
         }
-        */
+    }
+
+    private function hasThisOption(ProductInterface $product): bool
+    {
+        return (bool)count($product->getOptions()[$this->helper->getTitle()]);
+    }
+
+    private function unsetOption(ProductInterface $product): array
+    {
+        $options = $product->getOptions();
+        unset($options[$this->helper->getTitle()]);
+
+        return $options;
+    }
+
+    private function removeOption(ProductInterface $product): void
+    {
+        $product->setOptions($this->unsetOption($product));
+    }
+
+    private function addOption(ProductInterface $product): void
+    {
+        $this->option->addData(
+            $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
+        );
+        $product->addOption($this->option)->setData('has_options', true);
     }
 
     private function getValues(): array
