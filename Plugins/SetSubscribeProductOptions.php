@@ -4,6 +4,7 @@ namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product\Option;
 use Osio\Subscriptions\Helper\Data as Helper;
 
 class SetSubscribeProductOptions
@@ -11,24 +12,33 @@ class SetSubscribeProductOptions
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
         private readonly Helper                       $helper
-    ) {
+    )
+    {
     }
 
-    public function beforeSave(ProductInterface $product): void
+    public function beforeSave(ProductInterface $product): bool
     {
         if (!$this->helper->isEnabled()) {
-            return;
+            return false;
         }
-        $hasOption = $this->hasThisOption($product->getOptions());
-        if ($this->helper->isOptionFlagSet() && !$this->hasThisOption($product->getOptions())) {
+        if ($this->isOptionFlagSet($product) && !$this->hasThisOption($product->getOptions())) {
             $this->addOption($product);
-        } else {
+        }
+        if (!$this->isOptionFlagSet($product) && $this->hasThisOption($product->getOptions())) {
             $this->removeOption($product);
         }
+
+        return false;
+    }
+
+    private function isOptionFlagSet(ProductInterface $product): bool
+    {
+        return (bool) $product->getData('subscribable');
     }
 
     private function hasThisOption($options): bool
     {
+        /** @var Option $option */
         foreach ($options as $option) {
             if ($option->getTitle() == $this->helper->getTitle()) {
                 return true;
@@ -40,6 +50,7 @@ class SetSubscribeProductOptions
 
     private function removeOption($options): void
     {
+        /** @var Option $option */
         foreach ($options as $option) {
             if ($option->getTitle() == $this->helper->getTitle()) {
                 $option->delete();
