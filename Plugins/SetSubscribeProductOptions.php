@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
@@ -21,9 +23,11 @@ class SetSubscribeProductOptions
         if (!$this->helper->isEnabled()) {
             return false;
         }
+
         if ($this->isOptionFlagSet($product) && !$this->hasThisOption($product->getOptions())) {
             $this->addOption($product);
         }
+
         if (!$this->isOptionFlagSet($product) && $this->hasThisOption($product->getOptions())) {
             $this->removeOption($product);
         }
@@ -33,7 +37,7 @@ class SetSubscribeProductOptions
 
     private function isOptionFlagSet(ProductInterface $product): bool
     {
-        return (bool) $product->getData('subscribable');
+        return (bool)$product->getData(e);
     }
 
     private function hasThisOption($options): bool

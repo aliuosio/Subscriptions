@@ -16,31 +16,27 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Eav\Setup\EavSetup;
 use Magento\Eav\Setup\EavSetupFactory;
+use Magento\Framework\Setup\Patch\PatchInterface;
+use Magento\Framework\Validator\ValidateException;
+use Osio\Subscriptions\Helper\Data as Helper;
 use Psr\Log\LoggerInterface;
 use Zend_Validate_Exception;
+
 
 class IsProductSubscribable implements DataPatchInterface
 {
     public const NAME = 'subscribable';
 
-    private EavSetupFactory $eavSetupFactory;
-    private ModuleDataSetupInterface $moduleDataSetup;
-    private AttributeManagementInterface $attributeManagement;
-    private Config $config;
-    private LoggerInterface $logger;
 
     public function __construct(
-        EavSetupFactory $eavSetupFactory,
-        ModuleDataSetupInterface $moduleDataSetup,
-        Config $config,
-        AttributeManagementInterface $attributeManagement,
-        LoggerInterface $logger,
-    ) {
-        $this->logger = $logger;
-        $this->config = $config;
-        $this->attributeManagement = $attributeManagement;
-        $this->moduleDataSetup = $moduleDataSetup;
-        $this->eavSetupFactory = $eavSetupFactory;
+        private readonly EavSetupFactory              $eavSetupFactory,
+        private readonly ModuleDataSetupInterface     $moduleDataSetup,
+        private readonly AttributeManagementInterface $attributeManagement,
+        private readonly Config                       $config,
+        private readonly LoggerInterface              $logger,
+        private readonly Helper                       $helper
+    )
+    {
     }
 
     /**
@@ -54,7 +50,7 @@ class IsProductSubscribable implements DataPatchInterface
     /**
      * @inheritDoc
      */
-    public function getAliases()
+    public function getAliases(): array
     {
         return [];
     }
@@ -62,7 +58,7 @@ class IsProductSubscribable implements DataPatchInterface
     /**
      * @inheritDoc
      */
-    public function apply()
+    public function apply(): PatchInterface|IsProductSubscribable|static
     {
         /** @var EavSetup $eavSetup */
         $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
@@ -73,7 +69,7 @@ class IsProductSubscribable implements DataPatchInterface
                 [
                     'type' => 'int',
                     'group' => 'General',
-                    'label' => IsProductSubscribable::NAME,
+                    'label' => $this->helper->getCode(),
                     'input' => 'boolean',
                     'source' => Boolean::class,
                     'sort_order' => 10,
@@ -88,7 +84,7 @@ class IsProductSubscribable implements DataPatchInterface
                     'used_in_product_listing' => true,
                 ]
             );
-        } catch (LocalizedException | Zend_Validate_Exception $e) {
+        } catch (LocalizedException|Zend_Validate_Exception|ValidateException $e) {
             $this->logger->critical($e->getTraceAsString());
         }
 
@@ -97,11 +93,11 @@ class IsProductSubscribable implements DataPatchInterface
                 $this->attributeManagement->assign(
                     Product::ENTITY,
                     $attributeSetId,
-                    $this->config->getAttributeGroupId((int) $attributeSetId, 'Product Details'),
+                    $this->config->getAttributeGroupId((int)$attributeSetId, 'Product Details'),
                     IsProductSubscribable::NAME,
                     10
                 );
-            } catch (InputException | NoSuchEntityException $e) {
+            } catch (InputException|NoSuchEntityException $e) {
                 $this->logger->critical($e->getMessage());
             }
         }
