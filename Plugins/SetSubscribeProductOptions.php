@@ -67,26 +67,17 @@ class SetSubscribeProductOptions
 
     private function getValues(): array
     {
-        return [
-            [
-                'title' => 'Option 1',
-                'price' => 10,
+        $sort_order = 1;
+        return array_map(function ($title) use (&$sort_order) {
+            $result = [
+                'title' => $title,
+                'price' => 0,
                 'price_type' => 'fixed',
-                'sort_order' => 1,
-            ],
-            [
-                'title' => 'Option 2',
-                'price' => 20,
-                'price_type' => 'fixed',
-                'sort_order' => 2,
-            ],
-            [
-                'title' => 'Option 3',
-                'price' => 30,
-                'price_type' => 'fixed',
-                'sort_order' => 30,
-            ],
-        ];
+                'sort_order' => $sort_order,
+            ];
+            ++$sort_order;
+            return $result;
+        }, $this->helper->getPeriod());
     }
 
     private function getCustomOptions(ProductInterface $product, mixed $title, array $values): array
