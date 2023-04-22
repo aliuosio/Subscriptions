@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
-use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 
 class SetSubscribeProductOptions
 {
     public function __construct(
-        private readonly ProductCustomOptionInterfaceFactory $optionInterfaceFactory,
-        private readonly Helper                              $helper
+        private readonly ProductCustomOptionInterface $option,
+        private readonly Helper                       $helper
     )
     {
     }
@@ -35,11 +34,6 @@ class SetSubscribeProductOptions
         return false;
     }
 
-    private function getOptionsInterface(): ProductCustomOptionInterface
-    {
-        return $this->optionInterfaceFactory->create();
-    }
-
     private function isOptionFlagSet(ProductInterface $product): bool
     {
         return (bool)$product->getData($this->helper->getCode());
@@ -56,8 +50,7 @@ class SetSubscribeProductOptions
 
     private function resetOptions(ProductInterface $product): void
     {
-        $options = $product->getOptions();
-        $optionsReset = array_filter($options, function ($option) {
+        $optionsReset = array_filter($product->getOptions(), function ($option) {
             return $option->getTitle() !== $this->helper->getTitle();
         });
 
@@ -66,10 +59,10 @@ class SetSubscribeProductOptions
 
     private function addOption(ProductInterface $product): void
     {
-        $this->getOptionsInterface()->addData(
+        $this->option->addData(
             $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
         );
-        $product->addOption($this->getOptionsInterface())->setData('has_options', true);
+        $product->addOption($this->option)->setData('has_options', true);
     }
 
     private function getValues(): array
