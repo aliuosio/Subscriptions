@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Osio\Subscriptions\Plugins;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
-use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 
 class SetSubscribeProductOptions
 {
     public function __construct(
-        private readonly productCustomOptionInterfaceFactory $optionInterfaceFactory,
-        private readonly Helper                              $helper
+        private readonly ProductCustomOptionInterface $option,
+        private readonly Helper                       $helper
     )
     {
     }
@@ -51,44 +50,44 @@ class SetSubscribeProductOptions
 
     private function resetOptions(ProductInterface $product): void
     {
-        $optionsReset = array_filter($product->getOptions(), function ($option) {
+        $options = $product->getOptions();
+        $optionsReset = array_filter($options, function ($option) {
             return $option->getTitle() !== $this->helper->getTitle();
         });
 
         $product->setOptions(array_values($optionsReset));
     }
 
-    private function getOption(): ProductCustomOptionInterface
-    {
-        return $this->optionInterfaceFactory->create();
-    }
-
     private function addOption(ProductInterface $product): void
     {
-        $this->getOption()->setData(
-            $this->getCustomOptions(
-                $product,
-                $this->helper->getTitle(),
-                $this->getValues($this->helper->getPeriod())
-            )
+        $this->option->addData(
+            $this->getCustomOptions($product, $this->helper->getTitle(), $this->getValues())
         );
-        $product->addOption($this->getOption())->setData('has_options', true);
+        $product->addOption($this->option)->setData('has_options', true);
     }
 
-    private function getValues(array $titles): array
+    private function getValues(): array
     {
-        $options = [];
-
-        foreach ($titles as $index => $title) {
-            $options[] = [
-                'title' => $title,
-                'price' => 0,
+        return [
+            [
+                'title' => 'Option 1',
+                'price' => 10,
                 'price_type' => 'fixed',
-                'sort_order' => $index + 1,
-            ];
-        }
-
-        return $options;
+                'sort_order' => 1,
+            ],
+            [
+                'title' => 'Option 2',
+                'price' => 20,
+                'price_type' => 'fixed',
+                'sort_order' => 2,
+            ],
+            [
+                'title' => 'Option 3',
+                'price' => 30,
+                'price_type' => 'fixed',
+                'sort_order' => 30,
+            ],
+        ];
     }
 
     private function getCustomOptions(ProductInterface $product, mixed $title, array $values): array
