@@ -22,21 +22,21 @@ class Data extends AbstractHelper
 
     public function isEnabled(): bool
     {
-        return (bool) $this->scopeConfig->getValue(self::ENABLED);
+        return (bool) $this->scopeConfig->getValue(Data::ENABLED);
     }
 
     public function getTitle(): mixed
     {
-        return $this->scopeConfig->getValue(self::TITLE);
+        return $this->scopeConfig->getValue(Data::TITLE);
     }
 
     public function getCode(): mixed
     {
-        return $this->scopeConfig->getValue(self::CODE);
+        return $this->scopeConfig->getValue(Data::CODE);
     }
 
     public function getPeriod(): array
     {
-        return explode(self::DELIMITER, $this->scopeConfig->getValue(self::PERIODS));
+        return explode(Data::DELIMITER, $this->scopeConfig->getValue(Data::PERIODS));
     }
 }

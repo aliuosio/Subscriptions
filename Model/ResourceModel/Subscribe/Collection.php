@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Osio\Subscriptions\Model\ResourceModel\Subscribe;
 
 use Osio\Subscriptions\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
