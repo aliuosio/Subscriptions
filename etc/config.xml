@@ -13,6 +13,7 @@
             <subscribable>
                 <title>Subscription</title>
                 <code>subscribable</code>
+                <fieldset>general</fieldset>
                 <enabled>0</enabled>
                 <periods>1,2,3,4</periods>
             </subscribable>

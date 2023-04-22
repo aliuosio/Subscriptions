@@ -11,6 +11,7 @@ class Data extends AbstractHelper
 {
     const TITLE = 'system/subscribable/title';
     const CODE = 'system/subscribable/code';
+    const FIELDSET = 'system/subscribable/fieldset';
     const PERIODS = 'system/subscribable/periods';
     const ENABLED = 'system/subscribable/enabled';
     const DELIMITER = ',';
@@ -33,6 +34,11 @@ class Data extends AbstractHelper
     public function getCode(): mixed
     {
         return $this->scopeConfig->getValue(Data::CODE);
+    }
+
+    public function getFieldset(): mixed
+    {
+        return $this->scopeConfig->getValue(Data::FIELDSET);
     }
 
     public function getPeriod(): array

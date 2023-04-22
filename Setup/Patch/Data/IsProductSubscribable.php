@@ -25,8 +25,6 @@ use Zend_Validate_Exception;
 
 class IsProductSubscribable implements DataPatchInterface
 {
-    public const NAME = 'subscribable';
-    public const GROUP = 'general';
 
     public function __construct(
         private readonly EavSetupFactory              $eavSetupFactory,
@@ -68,7 +66,7 @@ class IsProductSubscribable implements DataPatchInterface
                 $this->helper->getCode(),
                 [
                     'type' => 'int',
-                    'group' => IsProductSubscribable::GROUP,
+                    'group' => $this->helper->getFieldset(),
                     'label' => $this->helper->getCode(),
                     'input' => 'boolean',
                     'source' => Boolean::class,
