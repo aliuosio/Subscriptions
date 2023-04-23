@@ -6,17 +6,8 @@
         <plugin name="set_subscribe_product_options"
                 type="Osio\Subscriptions\Plugins\SetSubscribeProductOptions"/>
     </type>
-    <!--
-    <type name="Magento\Sales\Api\OrderManagementInterface">
-        <plugin name="osio_after_order_save"
-                type="Osio\Subscriptions\Plugins\Model\OrderManagementInterfacePlugin"/>
+    <type name="Magento\Catalog\Ui\DataProvider\Product\Form\ProductDataProvider">
+        <plugin name="subscriptions_product_data_provider_disable_attribute"
+                type="Osio\Subscriptions\Plugins\ProductDataProviderDisableAttribute"/>
     </type>
-    <type name="Magento\Framework\Console\CommandListInterface">
-        <arguments>
-            <argument name="commands" xsi:type="array">
-                <item name="subscriptionsCommandLine" xsi:type="object">Osio\Subscriptions\CommandLine\Console\Runner</item>
-            </argument>
-        </arguments>
-    </type>
-    -->
 </config>
