@@ -5,7 +5,7 @@
                 comment="Entity Id"/>
         <column name="item_id" xsi:type="int" padding="10" unsigned="true" nullable="false"
                 comment="Table sales_order_item"/>
-        <column name="period" xsi:type="int" nullable="false" comment="period in days"/>
+        <column name="period" xsi:type="int" nullable="false" comment="period in weeks"/>
         <column name="next_order_date" xsi:type="datetime" nullable="false" comment="next date order created "/>
         <column name="last_order_date" xsi:type="datetime" nullable="false" comment="last date order created "/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
