@@ -4,7 +4,9 @@
         <column name="id" xsi:type="int" padding="10" unsigned="true" nullable="false" identity="true"
                 comment="Entity Id"/>
         <column name="item_id" xsi:type="int" padding="10" unsigned="true" nullable="false"
-                comment="Table sales_order_item"/>
+                comment="Table sales_order_item reference"/>
+        <column name="customer_id" xsi:type="int" padding="10" unsigned="true" nullable="false"
+                comment="Table customer_entity reference"/>
         <column name="period" xsi:type="int" nullable="false" comment="period in weeks"/>
         <column name="next_order_date" xsi:type="datetime" nullable="false" comment="next date order created "/>
         <column name="last_order_date" xsi:type="datetime" nullable="false" comment="last date order created "/>
@@ -13,6 +15,8 @@
         </constraint>
         <constraint xsi:type="foreign" referenceId="FK_SUBSCRIPTIONS_ITEM_ID" table="subscriptions" column="item_id"
                     referenceTable="sales_order_item" referenceColumn="item_id"/>
+        <constraint xsi:type="foreign" referenceId="FK_SUBSCRIPTIONS_CUSTOMER_ID" table="subscriptions" column="customer_id"
+                    referenceTable="customer_entity" referenceColumn="entity_id"/>
         <constraint xsi:type="unique" referenceId="UNIQUE_ITEM_ID">
             <column name="item_id"/>
         </constraint>
