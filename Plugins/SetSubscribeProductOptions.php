@@ -13,14 +13,13 @@ class SetSubscribeProductOptions
     public function __construct(
         private readonly ProductCustomOptionInterface $option,
         private readonly Helper                       $helper
-    )
-    {
+    ) {
     }
 
-    public function beforeSave(ProductInterface $product): bool
+    public function beforeSave(ProductInterface $product): void
     {
         if (!$this->helper->isEnabled()) {
-            return false;
+            return;
         }
 
         if ($this->isOptionFlagSet($product) && !$this->hasThisOption($product)) {
@@ -30,8 +29,6 @@ class SetSubscribeProductOptions
         if (!$this->isOptionFlagSet($product) && $this->hasThisOption($product)) {
             $this->resetOptions($product);
         }
-
-        return false;
     }
 
     private function isOptionFlagSet(ProductInterface $product): bool
