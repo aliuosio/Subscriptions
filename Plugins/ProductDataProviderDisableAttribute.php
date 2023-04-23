@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Osio\Subscriptions\Plugins;
 
 use Osio\Subscriptions\Helper\Data as Helper;
