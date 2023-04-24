@@ -13,41 +13,55 @@ class OrderItemsToSubscribeSet
     public function __construct(
         private readonly Helper             $helper,
         private readonly ResourceConnection $resource
-    )
-    {
+    ) {
     }
 
     public function afterSetStatus(OrderInterface $subject, OrderInterface $result): OrderInterface
     {
-        if ($this->helper->isEnabled() && $result->getStatus() == 'complete') {
+        if (!$this->helper->isEnabled() || $result->getStatus() !== 'complete') {
+            return $result;
+        }
 
-            $data = [];
+        $data = [];
+        foreach ($result->getItems() as $item) {
+            $options = $item->getData('product_options');
 
-            foreach ($result->getItems() as $item) {
-                foreach ($item->getData('product_options') as $options) {
-                    if (is_array($options)) {
-                        foreach ($options as $option) {
-                            if (isset($option['label']) && $option['label'] == $this->helper->getTitle()) {
-                                $data[$item->getItemId()]['item_id'] = $item->getItemId();
-                                $data[$item->getItemId()]['customer_id'] = $result->getCustomerId();
-                                $data[$item->getItemId()]['period'] = $option['value'];
-                            }
-                        }
-                    }
-                }
+            if (!is_array($options)) {
+                continue;
             }
 
-            if (!empty($data)) {
-                $this->insertMultiple($data);
+            $period = $this->getSubscriptionPeriod($options);
+            if (!$period) {
+                continue;
             }
+
+            $data[] = [
+                'item_id'        => $item->getItemId(),
+                'customer_id'    => $result->getCustomerId(),
+                'period'         => (int) $period,
+                'next_order_date' => $this->helper->getNextDateTime((int) $period),
+            ];
+        }
+
+        if (!empty($data)) {
+            $this->insertMultiple($data);
         }
 
         return $result;
     }
 
-    public function insertMultiple(array $data): int
+    private function getSubscriptionPeriod(array $options): ?string
     {
-        return $this->resource->getConnection()
-            ->insertMultiple('subscriptions', $data);
+        foreach ($options as $option) {
+            if (isset($option['label']) && $option['label'] === $this->helper->getTitle() && isset($option['value'])) {
+                return $option['value'];
+            }
+        }
+        return null;
+    }
+
+    private function insertMultiple(array $data): void
+    {
+        $this->resource->getConnection()->insertMultiple('subscriptions', $data);
     }
 }

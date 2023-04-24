@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Osio\Subscriptions\Helper;
 
+use DateTime;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 
@@ -23,7 +24,7 @@ class Data extends AbstractHelper
 
     public function isEnabled(): bool
     {
-        return (bool) $this->scopeConfig->getValue(Data::ENABLED);
+        return (bool)$this->scopeConfig->getValue(Data::ENABLED);
     }
 
     public function getTitle(): mixed
@@ -44,5 +45,16 @@ class Data extends AbstractHelper
     public function getPeriod(): array
     {
         return explode(Data::DELIMITER, $this->scopeConfig->getValue(Data::PERIODS));
+    }
+
+    public function getNextDate(int $period): DateTime
+    {
+        return new DateTime("+$period week");
+    }
+
+    public function getNextDateTime(int $period): string
+    {
+        return $this->getNextDate($period)
+            ->format('Y-m-d H:i:s');
     }
 }
