@@ -15,7 +15,7 @@
                 <code>subscribable</code>
                 <fieldset>general</fieldset>
                 <enabled>0</enabled>
-                <periods>1,2,3,4</periods>
+                <periods>1 week, 2 weeks, 3 weeks, 4 weeks</periods>
             </subscribable>
         </system>
     </default>
