@@ -13,7 +13,8 @@ class OrderItemsToSubscribeSet
     public function __construct(
         private readonly Helper             $helper,
         private readonly ResourceConnection $resource
-    ) {
+    )
+    {
     }
 
     public function afterSetStatus(OrderInterface $subject, OrderInterface $result): OrderInterface
@@ -36,10 +37,10 @@ class OrderItemsToSubscribeSet
             }
 
             $data[] = [
-                'item_id'        => $item->getItemId(),
-                'customer_id'    => $result->getCustomerId(),
-                'period'         => (int) $period,
-                'next_order_date' => $this->helper->getNextDateTime((int) $period),
+                'item_id' => $item->getItemId(),
+                'customer_id' => $result->getCustomerId(),
+                'period' => $period,
+                'next_order_date' => $this->helper->getNextDateTime($period),
             ];
         }
 
@@ -50,13 +51,18 @@ class OrderItemsToSubscribeSet
         return $result;
     }
 
-    private function getSubscriptionPeriod(array $options): ?string
+    private function getSubscriptionPeriod(array $options): ?int
     {
-        foreach ($options as $option) {
-            if (isset($option['label']) && $option['label'] === $this->helper->getTitle() && isset($option['value'])) {
-                return $option['value'];
+        foreach ($options as $optionArray) {
+            if (is_array($optionArray)) {
+                foreach ($optionArray as $option) {
+                    if (isset($option['label']) && $option['label'] === $this->helper->getTitle() && isset($option['value'])) {
+                        return (int)$option['value'];
+                    }
+                }
             }
         }
+
         return null;
     }
 
