@@ -35,8 +35,7 @@ class Run extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('Hello World!');
-        $this->reorder->execute();
+        $output->writeln(print_r($this->reorder->execute(), true));
 
         return 1;
     }

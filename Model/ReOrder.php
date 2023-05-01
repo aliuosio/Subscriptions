@@ -4,73 +4,59 @@ declare(strict_types=1);
 
 namespace Osio\Subscriptions\Model;
 
+use Exception;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Item;
+use Magento\Quote\Model\QuoteManagement;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
 use Zend_Db_Expr;
-use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Model\Service\QuoteService;
-use Magento\Quote\Model\Quote;
+use Magento\Framework\App\ObjectManager;
 
 class ReOrder
 {
 
     public function __construct(
-        private readonly subscriptionCollection $subscriptionCollection,
-        private readonly OrderFactory $orderFactory,
-        private readonly QuoteService $quoteService
+        private readonly subscriptionCollection $subscriptionCollection
     )
     {
     }
 
-    public function reorderItems(array $itemIds, int $customerId)
-    {
-        // Load the order items from the database using the item ids
-        $orderItems = $this->orderFactory->create()
-            ->getCollection()
-            ->addFieldToFilter('item_id', ['in' => $itemIds])
-            ->getItems();
-
-        // Create a new quote
-        $quote = $this->quoteService->createEmptyCart();
-        $quote->setCustomer($customerId);
-
-        // Add the order items to the quote
-        foreach ($orderItems as $item) {
-            $quoteItem = $quote->addProduct(
-                $item->getProduct(),
-                ['qty' => $item->getQtyOrdered()]
-            );
-            $quoteItem->setOptions($item->getProductOptions());
-        }
-
-        // Set the same shipping and billing addresses from the original order
-        $originalOrder = reset($orderItems)->getOrder();
-        $shippingAddress = $originalOrder->getShippingAddress()->getData();
-        $billingAddress = $originalOrder->getBillingAddress()->getData();
-        $quote->getShippingAddress()->addData($shippingAddress);
-        $quote->getBillingAddress()->addData($billingAddress);
-
-        // Set the same shipping and payment methods from the original order
-        $quote->getShippingAddress()->setShippingMethod($originalOrder->getShippingMethod());
-        $quote->getPayment()->setMethod($originalOrder->getPayment()->getMethod());
-
-        // Collect totals and save the quote
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->collectTotals();
-        $quote->save();
-
-        // Create a new order based on the quote
-        $order = $this->quoteService->submit($quote);
-        $order->save();
-
-        return $order;
-    }
-
+    /**
+     * @throws LocalizedException
+     * @throws Exception
+     */
     public function execute(): array
     {
-        return $this->getItemsGroupedByCustomer();
+        $result = [];
+        foreach ($this->getGroupedByCustomer() as $customerId => $itemIds) {
+            $quote = ObjectManager::getInstance()->create(Quote::class);
+            $quote->setCustomerById($customerId);
+            $quote->setStoreId($quote->getStore()->getId());
+            foreach ($itemIds as $itemId) {
+                $item = ObjectManager::getInstance()->create(Product::class)->load($itemId);
+                $quoteItem = ObjectManager::getInstance()->create(Item::class);
+                $quoteItem->setProduct($item);
+                $quoteItem->setQty(1);
+                $quoteItem->setPrice($item->getFinalPrice());
+                $quote->addItem($quoteItem);
+            }
+            $quote->getBillingAddress();
+            $quote->getShippingAddress()->setCollectShippingRates(true);
+            $quote->getShippingAddress()->collectShippingRates();
+            $quote->setPaymentMethod('checkmo');
+            $quote->setInventoryProcessed(false);
+            $quote->save();
+            $order = ObjectManager::getInstance()->create(QuoteManagement::class)->submit($quote);
+            $order->setEmailSent(0);
+            $order->save();
+            $result[$customerId] = $order->getIncrementId();
+        }
+        return $result;
     }
 
-    private function getItemsGroupedByCustomerQuery(): array
+    private function getSubscriptionsGroupedByCustomerQuery(): array
     {
         $this->subscriptionCollection->addFieldToFilter('next_order_date', ['lteq' => new Zend_Db_Expr('NOW()')]);
         $this->subscriptionCollection->getSelect()->columns(['item_ids' => new Zend_Db_Expr('GROUP_CONCAT(item_id)')]);
@@ -79,10 +65,15 @@ class ReOrder
         return $this->subscriptionCollection->toArray(['customer_id', 'item_ids']);
     }
 
-    private function getItemsGroupedByCustomer(): array
+    private function getOnlyItems(): array
+    {
+        return $this->getSubscriptionsGroupedByCustomerQuery()['items'];
+    }
+
+    private function getGroupedByCustomer(): array
     {
         $result = [];
-        foreach ($this->getItemsGroupedByCustomerQuery()['items'] as $item) {
+        foreach ($this->getOnlyItems() as $item) {
             $result[$item['customer_id']] = array_map('intval', explode(',', $item['item_ids']));
         }
 
