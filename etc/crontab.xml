@@ -1,8 +1,0 @@
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/cron.xsd">
-    <group id="default">
-        <job name="reorder_cron_job" instance="Vendor\Module\Cron\Reorder" method="execute">
-            <schedule>* * * * *</schedule>
-        </job>
-    </group>
-</config>
