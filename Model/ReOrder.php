@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Osio\Subscriptions\Model;
 
+use Exception;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -14,6 +15,7 @@ use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\ItemFactory;
 use Magento\Sales\Model\Order\ItemRepository;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 class ReOrder
 {
@@ -24,7 +26,8 @@ class ReOrder
         private readonly ItemRepository             $orderItemRepository,
         private readonly ItemFactory                $quoteItemFactory,
         private readonly QuoteManagement            $quoteManagement,
-        private readonly ProductRepositoryInterface $productRepository
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly CartRepositoryInterface    $quoteRepository
     )
     {
     }
@@ -33,46 +36,60 @@ class ReOrder
      * @throws NoSuchEntityException
      * @throws InputException
      * @throws LocalizedException
-     * @throws \Exception
+     * @throws Exception
      */
     public function execute(): array
     {
         $result = [];
+
         foreach ($this->getGroupedByCustomer() as $customerId => $itemIds) {
-            $quote = $this->quoteFactory->create();
-            $quote->setCustomerById($customerId);
-            $quote->setStoreId($quote->getStore()->getId());
-            foreach ($itemIds as $itemId) {
-                $orderItem = $this->orderItemRepository->get($itemId);
-                $product = $this->productRepository->getById($orderItem->getProductId());
-                $quoteItem = $this->quoteItemFactory->create();
-                $quoteItem->setProduct($product);
-                $quoteItem->setQty($orderItem->getQtyOrdered());
-                $quoteItem->setPrice($orderItem->getPrice());
-                $options = $orderItem->getProductOptions();
-                if (isset($options['options'])) {
-                    foreach ($options['options'] as $option) {
-                        $quoteItem->addOption(['label' => $option['label'], 'value' => $option['value']]);
-                    }
-                }
-                // Get the selected configurable product options from the order item and add them to the quote item
-                if (isset($options['attributes_info'])) {
-                    foreach ($options['attributes_info'] as $attribute) {
-                        $quoteItem->addOption(['label' => $attribute['label'], 'value' => $attribute['value']]);
-                    }
-                }
-                $quote->addItem($quoteItem);
-            }
-            $quote->getBillingAddress();
-            $quote->getShippingAddress()->setCollectShippingRates(true);
-            $quote->getShippingAddress()->collectShippingRates();
-            $quote->setPaymentMethod('checkmo');
-            $quote->setInventoryProcessed(false);
-            $quote->save();
-            $order = $this->quoteManagement->submit($quote);
-            $order->save();
-            $result[$customerId] = $order->getIncrementId();
+            $result = $this->setCustomerOrder($customerId, $itemIds);
         }
+
+        return $result;
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     * @throws InputException
+     * @throws Exception
+     */
+    private function setCustomerOrder(int $customerId, array $itemIds): array
+    {
+        $quote = $this->quoteFactory->create();
+        $quote->setCustomerId($customerId);
+        $quote->setStoreId($quote->getStore()->getId());
+        foreach ($itemIds as $itemId) {
+            $orderItem = $this->orderItemRepository->get($itemId);
+            $product = $this->productRepository->getById($orderItem->getProductId());
+            $quoteItem = $this->quoteItemFactory->create();
+            $quoteItem->setProduct($product);
+            $quoteItem->setQty($orderItem->getQtyOrdered());
+            $quoteItem->setPrice($orderItem->getPrice());
+            $options = $orderItem->getProductOptions();
+            if (isset($options['options'])) {
+                foreach ($options['options'] as $option) {
+                    $quoteItem->addOption(['label' => $option['label'], 'value' => $option['value']]);
+                }
+            }
+            // Get the selected configurable product options from the order item and add them to the quote item
+            if (isset($options['attributes_info'])) {
+                foreach ($options['attributes_info'] as $attribute) {
+                    $quoteItem->addOption(['label' => $attribute['label'], 'value' => $attribute['value']]);
+                }
+            }
+            $quote->addItem($quoteItem);
+        }
+        $quote->getBillingAddress();
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->getShippingAddress()->collectShippingRates();
+        $quote->setPaymentMethod('checkmo');
+        $this->quoteRepository->save($quote);
+        $order = $this->quoteManagement->submit($quote);
+        $order->save();
+        $result[$customerId] = $order->getIncrementId();
+
         return $result;
     }
 
