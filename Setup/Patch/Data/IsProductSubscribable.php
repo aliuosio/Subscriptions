@@ -20,8 +20,6 @@ use Magento\Framework\Setup\Patch\PatchInterface;
 use Magento\Framework\Validator\ValidateException;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Psr\Log\LoggerInterface;
-use Zend_Validate_Exception;
-
 
 class IsProductSubscribable implements DataPatchInterface
 {
@@ -36,7 +34,6 @@ class IsProductSubscribable implements DataPatchInterface
     )
     {
     }
-
     /**
      * @inheritDoc
      */
@@ -82,7 +79,7 @@ class IsProductSubscribable implements DataPatchInterface
                     'used_in_product_listing' => true,
                 ]
             );
-        } catch (LocalizedException|Zend_Validate_Exception|ValidateException $e) {
+        } catch (LocalizedException|ValidateException $e) {
             $this->logger->critical($e->getTraceAsString());
         }
 
