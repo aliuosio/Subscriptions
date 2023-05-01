@@ -14,4 +14,11 @@
         <plugin name="subscriptions_order_items_to_subscribe_set"
                 type="Osio\Subscriptions\Plugins\OrderItemsToSubscribeSet"/>
     </type>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="clean" xsi:type="object">Osio\Subscriptions\Console\Run</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
