@@ -70,7 +70,6 @@ class ReOrder
             $quote->setInventoryProcessed(false);
             $quote->save();
             $order = $this->quoteManagement->submit($quote);
-            $order->setEmailSent(0);
             $order->save();
             $result[$customerId] = $order->getIncrementId();
         }
