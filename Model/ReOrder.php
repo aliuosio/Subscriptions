@@ -4,42 +4,63 @@ declare(strict_types=1);
 
 namespace Osio\Subscriptions\Model;
 
-use Exception;
-use Magento\Catalog\Model\Product;
+use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Quote\Item;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\QuoteManagement;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
 use Zend_Db_Expr;
-use Magento\Framework\App\ObjectManager;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\Quote\ItemFactory;
+use Magento\Sales\Model\Order\ItemRepository;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
 class ReOrder
 {
 
     public function __construct(
-        private readonly subscriptionCollection $subscriptionCollection
+        private readonly subscriptionCollection     $subscriptionCollection,
+        private readonly QuoteFactory               $quoteFactory,
+        private readonly ItemRepository             $orderItemRepository,
+        private readonly ItemFactory                $quoteItemFactory,
+        private readonly QuoteManagement            $quoteManagement,
+        private readonly ProductRepositoryInterface $productRepository
     )
     {
     }
 
     /**
+     * @throws NoSuchEntityException
+     * @throws InputException
      * @throws LocalizedException
-     * @throws Exception
+     * @throws \Exception
      */
     public function execute(): array
     {
         $result = [];
         foreach ($this->getGroupedByCustomer() as $customerId => $itemIds) {
-            $quote = ObjectManager::getInstance()->create(Quote::class);
+            $quote = $this->quoteFactory->create();
             $quote->setCustomerById($customerId);
             $quote->setStoreId($quote->getStore()->getId());
             foreach ($itemIds as $itemId) {
-                $item = ObjectManager::getInstance()->create(Product::class)->load($itemId);
-                $quoteItem = ObjectManager::getInstance()->create(Item::class);
-                $quoteItem->setProduct($item);
-                $quoteItem->setQty(1);
-                $quoteItem->setPrice($item->getFinalPrice());
+                $orderItem = $this->orderItemRepository->get($itemId);
+                $product = $this->productRepository->getById($orderItem->getProductId());
+                $quoteItem = $this->quoteItemFactory->create();
+                $quoteItem->setProduct($product);
+                $quoteItem->setQty($orderItem->getQtyOrdered());
+                $quoteItem->setPrice($orderItem->getPrice());
+                $options = $orderItem->getProductOptions();
+                if (isset($options['options'])) {
+                    foreach ($options['options'] as $option) {
+                        $quoteItem->addOption(['label' => $option['label'], 'value' => $option['value']]);
+                    }
+                }
+                // Get the selected configurable product options from the order item and add them to the quote item
+                if (isset($options['attributes_info'])) {
+                    foreach ($options['attributes_info'] as $attribute) {
+                        $quoteItem->addOption(['label' => $attribute['label'], 'value' => $attribute['value']]);
+                    }
+                }
                 $quote->addItem($quoteItem);
             }
             $quote->getBillingAddress();
@@ -48,7 +69,7 @@ class ReOrder
             $quote->setPaymentMethod('checkmo');
             $quote->setInventoryProcessed(false);
             $quote->save();
-            $order = ObjectManager::getInstance()->create(QuoteManagement::class)->submit($quote);
+            $order = $this->quoteManagement->submit($quote);
             $order->setEmailSent(0);
             $order->save();
             $result[$customerId] = $order->getIncrementId();
