@@ -6,7 +6,7 @@ namespace Osio\Subscriptions\Model;
 
 use Magento\Framework\DataObject\IdentityInterface;
 use Magento\Framework\Model\AbstractModel;
-use vendor\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
 
 class Subscribe extends AbstractModel implements IdentityInterface
 {

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Osio\Subscriptions\Model\ResourceModel\Subscribe;
 
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
-use vendor\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
-use vendor\Model\Subscribe;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
+use Osio\Subscriptions\Model\Subscribe;
 
 class Collection extends AbstractCollection
 {
