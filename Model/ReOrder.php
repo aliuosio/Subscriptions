@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace vendor\Model;
+namespace Osio\Subscriptions\Model;
 
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -14,7 +14,7 @@ use Magento\Quote\Model\Quote\ItemFactory;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Model\Order\ItemRepository;
-use vendor\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
 use Zend_Db_Expr;
 
 class ReOrder

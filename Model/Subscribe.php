@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace vendor\Model;
+namespace Osio\Subscriptions\Model;
 
 use Magento\Framework\DataObject\IdentityInterface;
 use Magento\Framework\Model\AbstractModel;

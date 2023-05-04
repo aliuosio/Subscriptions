@@ -7,7 +7,7 @@ namespace Osio\Subscriptions\Cron;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use vendor\Model\ReOrder;
+use Osio\Subscriptions\Model\ReOrder;
 
 class Run
 {

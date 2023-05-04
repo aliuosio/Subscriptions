@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace vendor\Model\ResourceModel\Subscribe;
+namespace Osio\Subscriptions\Model\ResourceModel\Subscribe;
 
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use vendor\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
