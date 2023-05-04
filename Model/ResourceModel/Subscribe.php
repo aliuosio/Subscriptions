@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Model\ResourceModel;
+namespace vendor\Model\ResourceModel;
 
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use Magento\Framework\Model\ResourceModel\Db\Context;

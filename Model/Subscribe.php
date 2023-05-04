@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Model;
+namespace vendor\Model;
 
-use Magento\Framework\Model\AbstractModel;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
 use Magento\Framework\DataObject\IdentityInterface;
+use Magento\Framework\Model\AbstractModel;
+use vendor\Model\ResourceModel\Subscribe as ResourceModelSubscribe;
 
 class Subscribe extends AbstractModel implements IdentityInterface
 {

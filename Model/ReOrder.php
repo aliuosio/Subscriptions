@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Model;
+namespace vendor\Model;
 
 use Exception;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Model\QuoteManagement;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
-use Zend_Db_Expr;
-use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\Quote\ItemFactory;
-use Magento\Sales\Model\Order\ItemRepository;
-use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote\ItemFactory;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\QuoteManagement;
+use Magento\Sales\Model\Order\ItemRepository;
+use vendor\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
+use Zend_Db_Expr;
 
 class ReOrder
 {
@@ -60,27 +60,33 @@ class ReOrder
         $quote = $this->quoteFactory->create();
         $quote->setCustomerId($customerId);
         $quote->setStoreId($quote->getStore()->getId());
+
         foreach ($itemIds as $itemId) {
             $orderItem = $this->orderItemRepository->get($itemId);
-            $product = $this->productRepository->getById($orderItem->getProductId());
             $quoteItem = $this->quoteItemFactory->create();
-            $quoteItem->setProduct($product);
+            $quoteItem->setProduct($this->productRepository->getById($orderItem->getProductId()));
             $quoteItem->setQty($orderItem->getQtyOrdered());
             $quoteItem->setPrice($orderItem->getPrice());
             $options = $orderItem->getProductOptions();
             if (isset($options['options'])) {
                 foreach ($options['options'] as $option) {
-                    $quoteItem->addOption(['label' => $option['label'], 'value' => $option['value']]);
+                    $quoteItem->addOption([
+                        'label' => $option['label'],
+                        'value' => $option['value']
+                    ]);
                 }
             }
-            // Get the selected configurable product options from the order item and add them to the quote item
             if (isset($options['attributes_info'])) {
                 foreach ($options['attributes_info'] as $attribute) {
-                    $quoteItem->addOption(['label' => $attribute['label'], 'value' => $attribute['value']]);
+                    $quoteItem->addOption([
+                        'label' => $attribute['label'],
+                        'value' => $attribute['value']
+                    ]);
                 }
             }
             $quote->addItem($quoteItem);
         }
+
         $quote->getBillingAddress();
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->getShippingAddress()->collectShippingRates();
@@ -102,7 +108,7 @@ class ReOrder
         return $this->subscriptionCollection->toArray(['customer_id', 'item_ids']);
     }
 
-    private function getOnlyItems(): array
+    private function getCustomerItems(): array
     {
         return $this->getSubscriptionsGroupedByCustomerQuery()['items'];
     }
@@ -110,7 +116,7 @@ class ReOrder
     private function getGroupedByCustomer(): array
     {
         $result = [];
-        foreach ($this->getOnlyItems() as $item) {
+        foreach ($this->getCustomerItems() as $item) {
             $result[$item['customer_id']] = array_map('intval', explode(',', $item['item_ids']));
         }
 
