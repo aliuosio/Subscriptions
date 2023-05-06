@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Osio\Subscriptions\Console;
 
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,12 +34,14 @@ class Run extends Command
     }
 
     /**
-     * @inheritDoc
+     * @throws NoSuchEntityException
+     * @throws InputException
+     * @throws LocalizedException
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $result = $this->reorder->execute();
-        $output->writeln(print_r($result, true));
+
+        $output->writeln(print_r($this->reorder->execute(), true));
 
         return 1;
     }
