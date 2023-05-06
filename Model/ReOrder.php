@@ -14,20 +14,24 @@ use Magento\Quote\Model\Quote\ItemFactory;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Model\Order\ItemRepository;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
+use Osio\Subscriptions\Helper\Data as Helper;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory as subscriptionCollectionFactory;
 use Zend_Db_Expr;
+use Magento\Framework\App\ResourceConnection;
 
 class ReOrder
 {
 
     public function __construct(
-        private readonly subscriptionCollection     $subscriptionCollection,
-        private readonly QuoteFactory               $quoteFactory,
-        private readonly ItemRepository             $orderItemRepository,
-        private readonly ItemFactory                $quoteItemFactory,
-        private readonly QuoteManagement            $quoteManagement,
-        private readonly ProductRepositoryInterface $productRepository,
-        private readonly CartRepositoryInterface    $quoteRepository
+        private readonly subscriptionCollectionFactory $subscriptionCollectionFactory,
+        private readonly QuoteFactory                  $quoteFactory,
+        private readonly ItemRepository                $orderItemRepository,
+        private readonly ItemFactory                   $quoteItemFactory,
+        private readonly QuoteManagement               $quoteManagement,
+        private readonly ProductRepositoryInterface    $productRepository,
+        private readonly CartRepositoryInterface       $quoteRepository,
+        private readonly Helper                        $helper,
+        private readonly ResourceConnection            $resource
     )
     {
     }
@@ -41,12 +45,45 @@ class ReOrder
     public function execute(): array
     {
         $result = [];
-
         foreach ($this->getGroupedByCustomer() as $customerId => $itemIds) {
-            $result = $this->setCustomerOrder($customerId, $itemIds);
+            $result = array_merge($result, $this->setCustomerOrder($customerId, $itemIds));
+        }
+
+        if (!empty($result)) {
+            $this->updateSubscriptionsAfterReOrder($result);
         }
 
         return $result;
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    private function updateSubscriptionsAfterReOrder(array $result): void
+    {
+
+        $collection = $this->subscriptionCollectionFactory->create();
+        $collection->addFieldToSelect(['item_id', 'period']);
+        $collection->addFieldToFilter('item_id', ['in' => $result]);
+        $connection = $this->resource->getConnection();
+        try {
+            $connection->beginTransaction();
+            foreach ($collection->getItems() as $item) {
+                $connection->update(
+                    'subscriptions',
+                    [
+                        'next_order_date' => $this->helper->getNextDateTime((int)$item->getData('period')),
+                        'last_order_date' => date('Y-m-d H:i:s', time())
+                    ],
+                    ['item_id IN (?)' => $item->getData('item_id')]
+                );
+            }
+            $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -57,6 +94,7 @@ class ReOrder
      */
     private function setCustomerOrder(int $customerId, array $itemIds): array
     {
+        $result = [];
         $quote = $this->quoteFactory->create();
         $quote->setCustomerId($customerId);
         $quote->setStoreId($quote->getStore()->getId());
@@ -70,6 +108,9 @@ class ReOrder
             $options = $orderItem->getProductOptions();
             if (isset($options['options'])) {
                 foreach ($options['options'] as $option) {
+                    if ($this->helper->getTitle() == $option['label']) {
+                        continue;
+                    }
                     $quoteItem->addOption([
                         'label' => $option['label'],
                         'value' => $option['value']
@@ -87,25 +128,25 @@ class ReOrder
             $quote->addItem($quoteItem);
         }
 
-        $quote->getBillingAddress();
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->getShippingAddress()->collectShippingRates();
-        $quote->setPaymentMethod('checkmo');
-        $this->quoteRepository->save($quote);
-        $order = $this->quoteManagement->submit($quote);
-        $order->save();
-        $result[$customerId] = $order->getIncrementId();
+        /* $quote->getBillingAddress();
+         $quote->getShippingAddress()->setCollectShippingRates(true);
+         $quote->getShippingAddress()->collectShippingRates();
+         $quote->setPaymentMethod('checkmo');
+         $this->quoteRepository->save($quote);
+         $order = $this->quoteManagement->submit($quote);
+         $order->save();*/
 
-        return $result;
+        return array_merge($result, $itemIds);
     }
 
     private function getSubscriptionsGroupedByCustomerQuery(): array
     {
-        $this->subscriptionCollection->addFieldToFilter('next_order_date', ['lteq' => new Zend_Db_Expr('NOW()')]);
-        $this->subscriptionCollection->getSelect()->columns(['item_ids' => new Zend_Db_Expr('GROUP_CONCAT(item_id)')]);
-        $this->subscriptionCollection->getSelect()->group('customer_id');
+        $collection = $this->subscriptionCollectionFactory->create();
+        $collection->addFieldToFilter('next_order_date', ['lteq' => new Zend_Db_Expr('NOW()')]);
+        $collection->getSelect()->columns(['item_ids' => new Zend_Db_Expr('GROUP_CONCAT(item_id)')]);
+        $collection->getSelect()->group('customer_id');
 
-        return $this->subscriptionCollection->toArray(['customer_id', 'item_ids']);
+        return $collection->toArray(['customer_id', 'item_ids']);
     }
 
     private function getCustomerItems(): array

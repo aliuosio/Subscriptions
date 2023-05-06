@@ -33,7 +33,7 @@ class Run extends Command
     /**
      * @inheritDoc
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $result = $this->reorder->execute();
         $output->writeln(print_r($result, true));
