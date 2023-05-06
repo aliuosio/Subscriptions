@@ -18,6 +18,7 @@ use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory as subscriptionCollectionFactory;
 use Zend_Db_Expr;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Sales\Api\OrderRepositoryInterface;
 
 class ReOrder
 {
@@ -31,7 +32,8 @@ class ReOrder
         private readonly ProductRepositoryInterface    $productRepository,
         private readonly CartRepositoryInterface       $quoteRepository,
         private readonly Helper                        $helper,
-        private readonly ResourceConnection            $resource
+        private readonly ResourceConnection            $resource,
+        private readonly OrderRepositoryInterface      $orderRepository
     )
     {
     }
@@ -128,13 +130,17 @@ class ReOrder
             $quote->addItem($quoteItem);
         }
 
-        /* $quote->getBillingAddress();
+        /*
+         $quote->getBillingAddress();
          $quote->getShippingAddress()->setCollectShippingRates(true);
          $quote->getShippingAddress()->collectShippingRates();
          $quote->setPaymentMethod('checkmo');
-         $this->quoteRepository->save($quote);
-         $order = $this->quoteManagement->submit($quote);
-         $order->save();*/
+        */
+
+        $this->quoteRepository->save($quote);
+        $this->orderRepository->save(
+            $this->quoteManagement->submit($quote)
+        );
 
         return array_merge($result, $itemIds);
     }
