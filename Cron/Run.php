@@ -8,11 +8,13 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Osio\Subscriptions\Model\ReOrder;
+use Psr\Log\LoggerInterface;
 
 class Run
 {
     public function __construct(
-        private readonly ReOrder $reOrder
+        private readonly ReOrder         $reOrder,
+        private readonly LoggerInterface $logger
     )
     {
     }
@@ -23,8 +25,11 @@ class Run
      * @throws LocalizedException
      * @throws InputException
      */
-    protected function execute(): void
+    protected function execute(): Run
     {
         $this->reOrder->execute();
+        $this->logger->debug('Cron: Osio\Subscriptions\Cron ran successfully');
+
+        return $this;
     }
 }

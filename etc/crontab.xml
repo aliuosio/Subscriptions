@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="default">
         <job instance="Osio\Subscriptions\Cron\Run" method="execute" name="osio_subscriptions_cron">
-            <schedule>* * * * *</schedule>
+            <schedule>46 3 * * *</schedule>
         </job>
     </group>
 </config>
