@@ -10,12 +10,19 @@ use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
+use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Api\Data\CartItemInterfaceFactory;
 use Magento\Quote\Api\Data\CartInterfaceFactory;
+use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as subscriptionCollection;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory as subscriptionCollectionFactory;
 use Zend_Db_Expr;
 use Magento\Framework\App\ResourceConnection;
@@ -59,16 +66,18 @@ class ReOrder
         return $result;
     }
 
+    private function getSubscriptionCollection(): subscriptionCollection
+    {
+        return $this->subscriptionCollectionFactory->create();
+    }
 
     /**
      * @throws Exception
      */
     private function updateSubscriptionsAfterReOrder(array $result): void
     {
-
-        $collection = $this->subscriptionCollectionFactory->create();
-        $collection->addFieldToSelect(['item_id', 'period']);
-        $collection->addFieldToFilter('item_id', ['in' => $result]);
+        $collection = $this->getSubscriptionCollection()->addFieldToSelect(['item_id', 'period'])
+            ->addFieldToFilter('item_id', ['in' => $result]);
         $connection = $this->resource->getConnection();
         try {
             $connection->beginTransaction();
@@ -97,6 +106,36 @@ class ReOrder
         return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
     }
 
+    private function getQuote(int $customerId): Quote
+    {
+        return $this->quoteFactory->create()->setCustomerId($customerId);
+    }
+
+    private function getOrderItem(): OrderItemRepositoryInterface
+    {
+        return $this->orderItemRepositoryFactory->create();
+    }
+
+    private function getQuoteItem(): CartItemInterface
+    {
+        return $this->quoteItemFactory->create();
+    }
+
+    private function getQuoteRepository(): CartRepositoryInterface
+    {
+        return $this->quoteRepositoryFactory->create();
+    }
+
+    private function getOrderRepository(): OrderRepositoryInterface
+    {
+        return $this->orderRepositoryFactory->create();
+    }
+
+    private function getQuoteManagement(): CartManagementInterface
+    {
+        return $this->quoteManagementFactory->create();
+    }
+
     /**
      * @throws NoSuchEntityException
      * @throws LocalizedException
@@ -106,13 +145,10 @@ class ReOrder
     private function setCustomerOrder(int $customerId, array $itemIds): array
     {
         $result = [];
-        $quote = $this->quoteFactory->create();
-        $quote->setCustomerId($customerId);
-        $quote->setStoreId($quote->getStore()->getId());
 
         foreach ($itemIds as $itemId) {
-            $orderItem = $this->orderItemRepositoryFactory->create()->get($itemId);
-            $quoteItem = $this->quoteItemFactory->create()
+            $orderItem = $this->getOrderItem()->get($itemId);
+            $quoteItem = $this->getQuoteItem()
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
@@ -136,7 +172,7 @@ class ReOrder
                     ]);
                 }
             }
-            $quote->addItem($quoteItem);
+            $quote = $this->getQuote($customerId)->addItem($quoteItem);
         }
 
         /*
@@ -146,17 +182,19 @@ class ReOrder
          $quote->setPaymentMethod('checkmo');
         */
 
-        $this->quoteRepositoryFactory->create()->save($quote);
-        $this->orderRepositoryFactory->create()->save(
-            $this->quoteManagementFactory->create()->submit($quote)
-        );
+        if (isset($quote)) {
+            $this->getQuoteRepository()->save($quote);
+            $this->getOrderRepository()->save(
+                $this->getQuoteManagement()->submit($quote)
+            );
+        }
 
         return array_merge($result, $itemIds);
     }
 
     private function getSubscriptionsGroupedByCustomerQuery(): array
     {
-        $collection = $this->subscriptionCollectionFactory->create();
+        $collection = $this->getSubscriptionCollection();
         $collection->addFieldToFilter('next_order_date', ['lteq' => new Zend_Db_Expr('NOW()')]);
         $collection->getSelect()->columns(['item_ids' => new Zend_Db_Expr('GROUP_CONCAT(item_id)')]);
         $collection->getSelect()->group('customer_id');
