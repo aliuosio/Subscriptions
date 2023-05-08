@@ -9,11 +9,11 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Model\Quote\ItemFactory;
-use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\QuoteManagement;
-use Magento\Sales\Model\Order\ItemRepository;
+use Magento\Quote\Api\Data\CartItemInterfaceFactory;
+use Magento\Quote\Api\Data\CartInterfaceFactory;
+use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory as subscriptionCollectionFactory;
 use Zend_Db_Expr;
@@ -25,10 +25,10 @@ class ReOrder
 
     public function __construct(
         private readonly subscriptionCollectionFactory $subscriptionCollectionFactory,
-        private readonly QuoteFactory                  $quoteFactory,
-        private readonly ItemRepository                $orderItemRepository,
-        private readonly ItemFactory                   $quoteItemFactory,
-        private readonly QuoteManagement               $quoteManagement,
+        private readonly CartInterfaceFactory          $quoteFactory,
+        private readonly OrderItemRepositoryInterface  $orderItemRepository,
+        private readonly CartItemInterfaceFactory      $quoteItemFactory,
+        private readonly CartManagementInterface       $quoteManagement,
         private readonly ProductRepositoryInterface    $productRepository,
         private readonly CartRepositoryInterface       $quoteRepository,
         private readonly Helper                        $helper,
