@@ -5,35 +5,36 @@ declare(strict_types=1);
 namespace Osio\Subscriptions\Model;
 
 use Exception;
-use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Api\CartManagementInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\CartManagementInterfaceFactory;
+use Magento\Quote\Api\CartRepositoryInterfaceFactory;
 use Magento\Quote\Api\Data\CartItemInterfaceFactory;
 use Magento\Quote\Api\Data\CartInterfaceFactory;
-use Magento\Sales\Api\OrderItemRepositoryInterface;
+use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory as subscriptionCollectionFactory;
 use Zend_Db_Expr;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
 
 class ReOrder
 {
 
     public function __construct(
-        private readonly subscriptionCollectionFactory $subscriptionCollectionFactory,
-        private readonly CartInterfaceFactory          $quoteFactory,
-        private readonly OrderItemRepositoryInterface  $orderItemRepository,
-        private readonly CartItemInterfaceFactory      $quoteItemFactory,
-        private readonly CartManagementInterface       $quoteManagement,
-        private readonly ProductRepositoryInterface    $productRepository,
-        private readonly CartRepositoryInterface       $quoteRepository,
-        private readonly Helper                        $helper,
-        private readonly ResourceConnection            $resource,
-        private readonly OrderRepositoryInterface      $orderRepository
+        private readonly subscriptionCollectionFactory       $subscriptionCollectionFactory,
+        private readonly CartInterfaceFactory                $quoteFactory,
+        private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
+        private readonly CartItemInterfaceFactory            $quoteItemFactory,
+        private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
+        private readonly ProductRepositoryInterfaceFactory   $productRepositoryFactory,
+        private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
+        private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
+        private readonly Helper                              $helper,
+        private readonly ResourceConnection                  $resource,
     )
     {
     }
@@ -90,6 +91,14 @@ class ReOrder
 
     /**
      * @throws NoSuchEntityException
+     */
+    private function getProductForItem($orderItem): ProductInterface
+    {
+        return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
+    }
+
+    /**
+     * @throws NoSuchEntityException
      * @throws LocalizedException
      * @throws InputException
      * @throws Exception
@@ -102,11 +111,11 @@ class ReOrder
         $quote->setStoreId($quote->getStore()->getId());
 
         foreach ($itemIds as $itemId) {
-            $orderItem = $this->orderItemRepository->get($itemId);
-            $quoteItem = $this->quoteItemFactory->create();
-            $quoteItem->setProduct($this->productRepository->getById($orderItem->getProductId()));
-            $quoteItem->setQty($orderItem->getQtyOrdered());
-            $quoteItem->setPrice($orderItem->getPrice());
+            $orderItem = $this->orderItemRepositoryFactory->create()->get($itemId);
+            $quoteItem = $this->quoteItemFactory->create()
+                ->setProduct($this->getProductForItem($orderItem))
+                ->setQty($orderItem->getQtyOrdered())
+                ->setPrice($orderItem->getPrice());
             $options = $orderItem->getProductOptions();
             if (isset($options['options'])) {
                 foreach ($options['options'] as $option) {
@@ -137,9 +146,9 @@ class ReOrder
          $quote->setPaymentMethod('checkmo');
         */
 
-        $this->quoteRepository->save($quote);
-        $this->orderRepository->save(
-            $this->quoteManagement->submit($quote)
+        $this->quoteRepositoryFactory->create()->save($quote);
+        $this->orderRepositoryFactory->create()->save(
+            $this->quoteManagementFactory->create()->submit($quote)
         );
 
         return array_merge($result, $itemIds);
