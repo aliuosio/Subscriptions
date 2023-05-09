@@ -13,6 +13,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
 
 class Index
@@ -22,7 +23,7 @@ class Index
         private readonly ProductRepositoryInterfaceFactory $productRepositoryFactory,
         private readonly Helper                            $helper,
         private readonly Factories                         $reOrderfactories,
-        private readonly Collection                        $collection
+        private readonly CollectionFactory                 $collectionFactory
     )
     {
     }
@@ -36,15 +37,20 @@ class Index
     public function execute(): array
     {
         $result = [];
-        foreach ($this->collection->getGroupedByCustomer() as $customerId => $itemIds) {
+        foreach ($this->getCollection()->getGroupedByCustomer() as $customerId => $itemIds) {
             $result = array_merge($result, $this->setCustomerOrder($customerId, $itemIds));
         }
 
         if (!empty($result)) {
-            $this->collection->updateSubscriptionsAfterReOrder($result);
+            $this->getCollection()->updateSubscriptionsAfterReOrder($result);
         }
 
         return $result;
+    }
+
+    private function getCollection(): Collection
+    {
+        return $this->collectionFactory->create();
     }
 
     /**
