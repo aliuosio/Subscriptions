@@ -18,6 +18,7 @@ use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Api\Data\CartItemInterfaceFactory;
 use Magento\Quote\Api\Data\CartInterfaceFactory;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderItemInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
@@ -137,6 +138,35 @@ class ReOrder
     }
 
     /**
+     * @throws LocalizedException
+     */
+    private function setOptions(OrderItemInterface $orderItem, CartItemInterface $quoteItem): CartItemInterface
+    {
+        $options = $orderItem->getProductOptions();
+        if (isset($options['options'])) {
+            foreach ($options['options'] as $option) {
+                if ($this->helper->getTitle() == $option['label']) {
+                    continue;
+                }
+                $quoteItem->addOption([
+                    'label' => $option['label'],
+                    'value' => $option['value']
+                ]);
+            }
+        }
+        if (isset($options['attributes_info'])) {
+            foreach ($options['attributes_info'] as $attribute) {
+                $quoteItem->addOption([
+                    'label' => $attribute['label'],
+                    'value' => $attribute['value']
+                ]);
+            }
+        }
+
+        return $quoteItem;
+    }
+
+    /**
      * @throws NoSuchEntityException
      * @throws LocalizedException
      * @throws InputException
@@ -152,26 +182,7 @@ class ReOrder
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
-            $options = $orderItem->getProductOptions();
-            if (isset($options['options'])) {
-                foreach ($options['options'] as $option) {
-                    if ($this->helper->getTitle() == $option['label']) {
-                        continue;
-                    }
-                    $quoteItem->addOption([
-                        'label' => $option['label'],
-                        'value' => $option['value']
-                    ]);
-                }
-            }
-            if (isset($options['attributes_info'])) {
-                foreach ($options['attributes_info'] as $attribute) {
-                    $quoteItem->addOption([
-                        'label' => $attribute['label'],
-                        'value' => $attribute['value']
-                    ]);
-                }
-            }
+            $quoteItem = $this->setOptions($orderItem, $quoteItem);
             $quote = $this->getQuote($customerId)->addItem($quoteItem);
         }
 
