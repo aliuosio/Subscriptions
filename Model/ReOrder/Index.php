@@ -7,6 +7,7 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
+use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -15,15 +16,18 @@ use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
+use Magento\Customer\Model\ResourceModel\Customer\Collection as customerCollection;
 
 class Index
 {
+    private array $customersData;
 
     public function __construct(
         private readonly ProductRepositoryInterfaceFactory $productRepositoryFactory,
         private readonly Helper                            $helper,
         private readonly Factories                         $reOrderfactories,
-        private readonly CollectionFactory                 $collectionFactory
+        private readonly CollectionFactory                 $collectionFactory,
+        private readonly Customers                         $customers
     )
     {
     }
@@ -37,6 +41,8 @@ class Index
     public function execute(): array
     {
         $result = [];
+        $this->getCustomerData();
+
         foreach ($this->getCollection()->getGroupedByCustomer() as $customerId => $itemIds) {
             $result = array_merge($result, $this->setCustomerOrder($customerId, $itemIds));
         }
@@ -46,6 +52,19 @@ class Index
         }
 
         return $result;
+    }
+
+    private function getCustomerData(): void
+    {
+        foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
+            $this->customersData[$customer->getEntityId()] = $customer;
+        }
+
+    }
+
+    private function getCustomerIds(): array
+    {
+        return array_keys($this->getCollection()->getGroupedByCustomer());
     }
 
     private function getCollection(): Collection
