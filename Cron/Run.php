@@ -7,13 +7,13 @@ namespace Osio\Subscriptions\Cron;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Osio\Subscriptions\Model\ReOrder;
+use Osio\Subscriptions\Model\ReOrder\Index;
 use Psr\Log\LoggerInterface;
 
 class Run
 {
     public function __construct(
-        private readonly ReOrder         $reOrder,
+        private readonly Index           $reOrder,
         private readonly LoggerInterface $logger
     )
     {

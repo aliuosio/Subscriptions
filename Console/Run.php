@@ -7,16 +7,16 @@ namespace Osio\Subscriptions\Console;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Osio\Subscriptions\Model\ReOrder\Index;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Osio\Subscriptions\Model\ReOrder;
 
 class Run extends Command
 {
     public function __construct(
-        private readonly ReOrder $reorder,
-        string                   $name = null
+        private readonly Index $reorder,
+        string                 $name = null
     )
     {
         parent::__construct($name);
