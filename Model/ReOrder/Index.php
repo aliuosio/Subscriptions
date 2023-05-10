@@ -59,7 +59,6 @@ class Index
         foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
             $this->customersData[$customer->getEntityId()] = $customer;
         }
-
     }
 
     private function getCustomerIds(): array
@@ -129,14 +128,8 @@ class Index
             $quote = $this->reOrderfactories->getQuote($customerId)->addItem($quoteItem);
         }
 
-        /*
-         $quote->getBillingAddress();
-         $quote->getShippingAddress()->setCollectShippingRates(true);
-         $quote->getShippingAddress()->collectShippingRates();
-         $quote->setPaymentMethod('checkmo');
-        */
-
-        if (isset($quote)) {
+        if (isset($quote) && isset($this->customersData[$customerId])) {
+            //$quote->setCustomer($this->customersData[$customerId]);
             $this->reOrderfactories->getQuoteRepository()->save($quote);
             $this->reOrderfactories->getOrderRepository()->save(
                 $this->reOrderfactories->getQuoteManagement()->submit($quote)
