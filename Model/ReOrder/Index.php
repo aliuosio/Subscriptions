@@ -154,6 +154,7 @@ class Index
         $result = [];
         $quote = $this->setOrderItems($itemIds, $customerId);
         if (isset($quote) && isset($this->customersData[$customerId])) {
+            $quote = $this->setCustomerData($quote, $customerId);
             $this->reOrderfactories->getQuoteRepository()->save($quote);
             $this->reOrderfactories->getOrderRepository()->save(
                 $this->reOrderfactories->getQuoteManagement()->submit($quote)
@@ -162,5 +163,14 @@ class Index
         }
 
         return $result;
+    }
+
+    private function setCustomerData(Quote $quote, int $customerId): Quote
+    {
+        foreach ($this->customersData[$customerId] as $key => $value) {
+            $quote->getCustomer()->setData($key, $value);
+        }
+
+        return $quote;
     }
 }
