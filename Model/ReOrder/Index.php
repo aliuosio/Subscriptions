@@ -71,20 +71,13 @@ class Index
         return $this->collectionFactory->create();
     }
 
-    /**
-     * @throws NoSuchEntityException
-     */
     private function getProductForItem($orderItem): ProductInterface
     {
         return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
     }
 
-    /**
-     * @throws LocalizedException
-     */
-    private function setOptions(OrderItemInterface $orderItem, CartItemInterface $quoteItem): CartItemInterface
+    private function setOptions($quoteItem, $options)
     {
-        $options = $orderItem->getProductOptions();
         if (isset($options['options'])) {
             foreach ($options['options'] as $option) {
                 if ($this->helper->getTitle() == $option['label']) {
@@ -96,6 +89,15 @@ class Index
                 ]);
             }
         }
+
+        return $quoteItem;
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function setAttributes(CartItemInterface $quoteItem, array $options): CartItemInterface
+    {
         if (isset($options['attributes_info'])) {
             foreach ($options['attributes_info'] as $attribute) {
                 $quoteItem->addOption([
@@ -106,6 +108,16 @@ class Index
         }
 
         return $quoteItem;
+    }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function setOptionsAndAttributes(OrderItemInterface $orderItem, CartItemInterface $quoteItem): CartItemInterface
+    {
+        $quoteItem = $this->setOptions($quoteItem, $orderItem->getProductOptions());
+
+        return $this->setAttributes($quoteItem, $orderItem->getProductOptions());
     }
 
     /**
@@ -124,7 +136,7 @@ class Index
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
-            $quoteItem = $this->setOptions($orderItem, $quoteItem);
+            $quoteItem = $this->setOptionsAndAttributes($orderItem, $quoteItem);
             $quote = $this->reOrderfactories->getQuote($customerId)->addItem($quoteItem);
         }
 
