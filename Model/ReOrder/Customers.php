@@ -13,8 +13,7 @@ class Customers
 
     public function __construct(
         private readonly customerCollectionFactory $customerCollectionFactory
-    )
-    {
+    ) {
     }
 
     private function getCustomerCollection(): customerCollection
@@ -26,5 +25,4 @@ class Customers
     {
         return $this->getCustomerCollection()->addFieldToFilter('entity_id', ['in' => $customerIds]);
     }
-
 }

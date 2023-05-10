@@ -38,7 +38,10 @@ class Collection extends AbstractCollection
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
     }
 
-    protected function _construct(): void
+    /**
+     * @inheritDoc
+     */
+    protected function _construct()
     {
         $this->_init(Subscribe::class, ResourceModelSubscribe::class);
     }

@@ -15,6 +15,9 @@ class Subscribe extends AbstractDb
         parent::__construct($context);
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init('subscriptions', 'id');

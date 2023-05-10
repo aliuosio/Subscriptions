@@ -27,9 +27,9 @@ class Factories
         private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
         private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
         private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
-    )
-    {
+    ) {
     }
+
     public function getQuote(int $customerId): Quote
     {
         return $this->quoteFactory->create()->setCustomerId($customerId);

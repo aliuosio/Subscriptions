@@ -14,6 +14,9 @@ class Subscribe extends AbstractModel implements IdentityInterface
     protected string $cacheTag = 'osio_subscriptions_subscribe';
     protected string $eventPrefix = 'osio_subscriptions_subscribe';
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init(ResourceModelSubscribe::class);

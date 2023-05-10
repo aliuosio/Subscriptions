@@ -26,8 +26,7 @@ class Index
         private readonly Factories                         $reOrderfactories,
         private readonly CollectionFactory                 $collectionFactory,
         private readonly Customers                         $customers
-    )
-    {
+    ) {
     }
 
     /**
@@ -77,7 +76,7 @@ class Index
         return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
     }
 
-    private function setOptions($quoteItem, $options)
+    private function setOptions($quoteItem, $options): CartItemInterface
     {
         if (isset($options['options'])) {
             foreach ($options['options'] as $option) {
@@ -151,5 +150,4 @@ class Index
 
         return array_merge($result, $itemIds);
     }
-
 }
