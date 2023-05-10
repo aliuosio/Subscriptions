@@ -146,8 +146,9 @@ class Index
             $this->reOrderfactories->getOrderRepository()->save(
                 $this->reOrderfactories->getQuoteManagement()->submit($quote)
             );
+            return array_merge($result, $itemIds);
         }
 
-        return array_merge($result, $itemIds);
+        return $result;
     }
 }
