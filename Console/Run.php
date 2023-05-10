@@ -17,8 +17,7 @@ class Run extends Command
     public function __construct(
         private readonly ReOrder $reorder,
         string                   $name = null
-    )
-    {
+    ) {
         parent::__construct($name);
     }
 
