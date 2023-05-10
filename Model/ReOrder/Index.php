@@ -11,6 +11,7 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartItemInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
@@ -30,9 +31,10 @@ class Index
     }
 
     /**
-     * @throws NoSuchEntityException
+     * @return array
      * @throws InputException
      * @throws LocalizedException
+     * @throws NoSuchEntityException
      * @throws Exception
      */
     public function execute(): array
@@ -113,11 +115,32 @@ class Index
     /**
      * @throws LocalizedException
      */
-    private function setOptionsAndAttributes(OrderItemInterface $orderItem, CartItemInterface $quoteItem): CartItemInterface
-    {
+    private function setOptionsAndAttributes(
+        OrderItemInterface $orderItem,
+        CartItemInterface  $quoteItem
+    ): CartItemInterface {
         $quoteItem = $this->setOptions($quoteItem, $orderItem->getProductOptions());
 
         return $this->setAttributes($quoteItem, $orderItem->getProductOptions());
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    private function setOrderItems($itemIds, int $customerId): ?Quote
+    {
+        foreach ($itemIds as $itemId) {
+            $orderItem = $this->reOrderfactories->getOrderItem()->get($itemId);
+            $quoteItem = $this->reOrderfactories->getQuoteItem()
+                ->setProduct($this->getProductForItem($orderItem))
+                ->setQty($orderItem->getQtyOrdered())
+                ->setPrice($orderItem->getPrice());
+            $quoteItem = $this->setOptionsAndAttributes($orderItem, $quoteItem);
+            $quote = $this->reOrderfactories->getQuote($customerId)->addItem($quoteItem);
+        }
+
+        return (isset($quote)) ? $quote : null;
     }
 
     /**
@@ -129,19 +152,8 @@ class Index
     private function setCustomerOrder(int $customerId, array $itemIds): array
     {
         $result = [];
-
-        foreach ($itemIds as $itemId) {
-            $orderItem = $this->reOrderfactories->getOrderItem()->get($itemId);
-            $quoteItem = $this->reOrderfactories->getQuoteItem()
-                ->setProduct($this->getProductForItem($orderItem))
-                ->setQty($orderItem->getQtyOrdered())
-                ->setPrice($orderItem->getPrice());
-            $quoteItem = $this->setOptionsAndAttributes($orderItem, $quoteItem);
-            $quote = $this->reOrderfactories->getQuote($customerId)->addItem($quoteItem);
-        }
-
+        $quote = $this->setOrderItems($itemIds, $customerId);
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            //$quote->setCustomer($this->customersData[$customerId]);
             $this->reOrderfactories->getQuoteRepository()->save($quote);
             $this->reOrderfactories->getOrderRepository()->save(
                 $this->reOrderfactories->getQuoteManagement()->submit($quote)
