@@ -7,7 +7,6 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
-use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -16,7 +15,6 @@ use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
-use Magento\Customer\Model\ResourceModel\Customer\Collection as customerCollection;
 
 class Index
 {
@@ -71,6 +69,9 @@ class Index
         return $this->collectionFactory->create();
     }
 
+    /**
+     * @throws NoSuchEntityException
+     */
     private function getProductForItem($orderItem): ProductInterface
     {
         return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
