@@ -44,7 +44,7 @@ class Data extends AbstractHelper
 
     public function getPeriod(): array
     {
-        return explode(Data::DELIMITER, $this->scopeConfig->getValue(Data::PERIODS));
+        return explode(Data::DELIMITER, (string)$this->scopeConfig->getValue(Data::PERIODS));
     }
 
     public function getNextDate(int $period): DateTime
