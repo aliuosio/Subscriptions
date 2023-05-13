@@ -78,7 +78,10 @@ class Index
         return $this->productRepositoryFactory->create()->getById($orderItem->getProductId());
     }
 
-    private function setOptions($quoteItem, $options): CartItemInterface
+    /**
+     * @throws LocalizedException
+     */
+    private function setOptions(CartItemInterface $quoteItem, array $options): CartItemInterface
     {
         if (isset($options['options'])) {
             foreach ($options['options'] as $option) {
@@ -128,7 +131,7 @@ class Index
      * @throws NoSuchEntityException
      * @throws LocalizedException
      */
-    private function setOrderItems($itemIds, int $customerId): ?Quote
+    private function setOrderItems(array $itemIds, int $customerId): ?Quote
     {
         foreach ($itemIds as $itemId) {
             $orderItem = $this->reOrderfactories->getOrderItem()->get($itemId);
@@ -154,22 +157,39 @@ class Index
         $result = [];
         $quote = $this->setOrderItems($itemIds, $customerId);
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setCustomerData($quote, $customerId);
+            $quote = $this->setBillingAndShipping($quote, $customerId);
             $this->reOrderfactories->getQuoteRepository()->save($quote);
-            $this->reOrderfactories->getOrderRepository()->save(
-                $this->reOrderfactories->getQuoteManagement()->submit($quote)
-            );
+            $orderEntity = $this->reOrderfactories->getQuoteManagement()->submit($quote);
+            $this->reOrderfactories->getOrderRepository()->save($orderEntity);
             return array_merge($result, $itemIds);
         }
 
         return $result;
     }
 
-    private function setCustomerData(Quote $quote, int $customerId): Quote
+    /**
+     * @throws LocalizedException
+     */
+    private function setBillingAndShipping(Quote $quote, int $customerId): Quote
     {
-        foreach ($this->customersData[$customerId] as $key => $value) {
-            $quote->getCustomer()->setData($key, $value);
-        }
+
+        //Set Billing and shipping Address to quote
+        $quote->getBillingAddress()->addData(
+            $this->customersData[$customerId]->getDefaultBillingAddress()->toArray()
+        );
+        $quote->getShippingAddress()->addData(
+            $this->customersData[$customerId]->getDefaultShippingAddress()->toArray()
+        );
+
+        // set shipping method
+        $shippingAddress = $quote->getShippingAddress();
+        $shippingAddress->setCollectShippingRates(true)
+            ->collectShippingRates()
+            ->setShippingMethod('flatrate_flatrate'); //shipping method, please verify flat rate shipping must be enable
+        $quote->setPaymentMethod('checkmo');
+        $quote->setInventoryProcessed(true);
+        // Set Sales Order Payment, We have taken check/money order
+        $quote->getPayment()->importData(['method' => 'checkmo']);
 
         return $quote;
     }
