@@ -7,6 +7,7 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -20,6 +21,8 @@ use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
 class Index
 {
     private array $customersData;
+    const PAYMENT_METHOD = '';
+    const SHIPPING_METHOD = 'flatrate_flatrate';
 
     public function __construct(
         private readonly ProductRepositoryInterfaceFactory $productRepositoryFactory,
@@ -139,8 +142,9 @@ class Index
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
-            $quoteItem = $this->setOptionsAndAttributes($orderItem, $quoteItem);
-            $quote = $this->reOrderfactories->getQuote($customerId)->addItem($quoteItem);
+            $quote = $this->reOrderfactories->getQuote($customerId)->addItem(
+                $this->setOptionsAndAttributes($orderItem, $quoteItem)
+            );
         }
 
         return (isset($quote)) ? $quote : null;
@@ -157,39 +161,39 @@ class Index
         $result = [];
         $quote = $this->setOrderItems($itemIds, $customerId);
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setBillingAndShipping($quote, $customerId);
+            $quote = $this->setAddress($quote, $customerId);
+            $quote = $this->setBilling($quote);
+            $quote->setStoreId($this->customersData[$customerId]->getStoreId());
             $this->reOrderfactories->getQuoteRepository()->save($quote);
-            $orderEntity = $this->reOrderfactories->getQuoteManagement()->submit($quote);
-            $this->reOrderfactories->getOrderRepository()->save($orderEntity);
+            $order = $this->reOrderfactories->getQuoteManagement()->submit($quote);
+            $this->reOrderfactories->getOrderRepository()->save($order);
+
             return array_merge($result, $itemIds);
         }
 
         return $result;
     }
 
-    /**
-     * @throws LocalizedException
-     */
-    private function setBillingAndShipping(Quote $quote, int $customerId): Quote
+    private function setBilling(Quote $quote): Quote
     {
+        $quote->getShippingAddress()->setCollectShippingRates(true)
+            ->collectShippingRates()
+            ->setShippingMethod(Index::SHIPPING_METHOD)
+            ->setPaymentMethod(Index::PAYMENT_METHOD)
+            ->setInventoryProcessed(true);
 
-        //Set Billing and shipping Address to quote
+        return $quote;
+    }
+
+    private function setAddress(Quote $quote, int $customerId): Quote
+    {
         $quote->getBillingAddress()->addData(
             $this->customersData[$customerId]->getDefaultBillingAddress()->toArray()
         );
+
         $quote->getShippingAddress()->addData(
             $this->customersData[$customerId]->getDefaultShippingAddress()->toArray()
         );
-
-        // set shipping method
-        $shippingAddress = $quote->getShippingAddress();
-        $shippingAddress->setCollectShippingRates(true)
-            ->collectShippingRates()
-            ->setShippingMethod('flatrate_flatrate'); //shipping method, please verify flat rate shipping must be enable
-        $quote->setPaymentMethod('checkmo');
-        $quote->setInventoryProcessed(true);
-        // Set Sales Order Payment, We have taken check/money order
-        $quote->getPayment()->importData(['method' => 'checkmo']);
 
         return $quote;
     }
