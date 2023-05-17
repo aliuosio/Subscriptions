@@ -7,7 +7,6 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
-use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -21,7 +20,7 @@ use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
 class Index
 {
     private array $customersData;
-    const PAYMENT_METHOD = '';
+    const PAYMENT_METHOD = 'checkmo';
     const SHIPPING_METHOD = 'flatrate_flatrate';
 
     public function __construct(
