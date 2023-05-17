@@ -23,7 +23,7 @@ class ProductDataProviderDisableAttribute
         return $meta;
     }
 
-    private function getCOntainer(): string
+    private function getContainer(): string
     {
         return 'container_' . $this->helper->getCode();
     }
