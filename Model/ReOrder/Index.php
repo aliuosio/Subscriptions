@@ -7,10 +7,13 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\State\InvalidTransitionException;
 use Magento\Quote\Api\Data\CartItemInterface;
+use Magento\Quote\Api\PaymentMethodManagementInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
@@ -28,8 +31,10 @@ class Index
         private readonly Helper                            $helper,
         private readonly Factories                         $reOrderfactories,
         private readonly CollectionFactory                 $collectionFactory,
-        private readonly Customers                         $customers
-    ) {
+        private readonly Customers                         $customers,
+        private readonly CustomerRepositoryInterface       $customerRepository
+    )
+    {
     }
 
     /**
@@ -123,7 +128,8 @@ class Index
     private function setOptionsAndAttributes(
         OrderItemInterface $orderItem,
         CartItemInterface  $quoteItem
-    ): CartItemInterface {
+    ): CartItemInterface
+    {
         $quoteItem = $this->setOptions($quoteItem, $orderItem->getProductOptions());
 
         return $this->setAttributes($quoteItem, $orderItem->getProductOptions());
@@ -160,11 +166,14 @@ class Index
         $result = [];
         $quote = $this->setOrderItems($itemIds, $customerId);
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setAddress($quote, $customerId);
-            $quote = $this->setBilling($quote);
             $quote->setStoreId($this->customersData[$customerId]->getStoreId());
+            $quote = $this->setAddress($quote, $customerId);
+            $quote = $this->setShippingMethod($quote);
+            $customer = $this->customerRepository->getById($customerId);
+            $quote->setCurrency()->assignCustomer($customer);
             $this->reOrderfactories->getQuoteRepository()->save($quote);
             $order = $this->reOrderfactories->getQuoteManagement()->submit($quote);
+            $order->setEmailSent(true);
             $this->reOrderfactories->getOrderRepository()->save($order);
 
             return array_merge($result, $itemIds);
@@ -173,13 +182,18 @@ class Index
         return $result;
     }
 
-    private function setBilling(Quote $quote): Quote
+    /**
+     * @throws LocalizedException
+     */
+    private function setShippingMethod(Quote $quote): Quote
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
-            ->setShippingMethod(Index::SHIPPING_METHOD)
-            ->setPaymentMethod(Index::PAYMENT_METHOD)
-            ->setInventoryProcessed(true);
+            ->setShippingMethod(Index::SHIPPING_METHOD);
+
+        $quote->setPaymentMethod('checkmo'); //payment method, please verify checkmo must be enable from admin
+        $quote->setInventoryProcessed(false); //decrease item stock equal to qty
+        $quote->getPayment()->importData(['method' => 'checkmo']);
 
         return $quote;
     }
