@@ -7,7 +7,6 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
 use Osio\Subscriptions\Helper\Data as Helper;
 
@@ -17,7 +16,6 @@ class Note
     public function __construct(
         private readonly Helper                             $helper,
         private readonly OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory,
-        private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
     )
     {
     }
@@ -30,13 +28,5 @@ class Note
                 ->setStatus('pending')
                 ->setIsCustomerNotified(false)
         );
-
-        $this->getOrderRepository()->save($order);
-    }
-
-
-    private function getOrderRepository(): OrderRepositoryInterface
-    {
-        return $this->orderRepositoryFactory->create();
     }
 }

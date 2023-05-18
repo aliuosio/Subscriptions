@@ -82,10 +82,9 @@ class ReOrder
                 ->save($quote);
             $order = $this->quoteManagementFactory->create()
                 ->submit($quote);
-            $this->getOrderRepository()->save($order);
-
             $this->orderSender->send($order);
             $this->note->add($order);
+            $this->getOrderRepository()->save($order);
 
             return array_merge($result, $itemIds);
         }
