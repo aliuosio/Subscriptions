@@ -14,43 +14,41 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
+use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
+use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
 use Osio\Subscriptions\Model\ResourceModel\Customers\Collection as CustomerCollection;
-use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
 use Magento\Quote\Api\Data\CartInterfaceFactory;
 use Magento\Quote\Api\Data\CartItemInterfaceFactory;
-use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
-use Magento\Quote\Api\PaymentMethodManagementInterfaceFactory;
+use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 
 class ReOrder
 {
 
     private array $customersData;
 
-    const PAYMENT_METHOD = 'checkmo';
-    const SHIPPING_METHOD = 'flatrate_flatrate';
-
     public function __construct(
-        private readonly ProductRepositoryInterfaceFactory       $productRepositoryFactory,
-        private readonly Helper                                  $helper,
-        private readonly SubscribeCollection                     $subscribeCollection,
-        private readonly CustomerCollection                      $customers,
-        private readonly CustomerRepositoryInterfaceFactory      $customerRepositoryFactory,
-        private readonly CartInterfaceFactory                    $quoteFactory,
-        private readonly OrderItemRepositoryInterfaceFactory     $orderItemRepositoryFactory,
-        private readonly CartItemInterfaceFactory                $quoteItemFactory,
-        private readonly CartRepositoryInterfaceFactory          $quoteRepositoryFactory,
-        private readonly OrderRepositoryInterfaceFactory         $orderRepositoryFactory,
-        private readonly CartManagementInterfaceFactory          $quoteManagementFactory,
-        private readonly PaymentMethodManagementInterfaceFactory $paymentMethodManagementFactory
+        private readonly ProductRepositoryInterfaceFactory   $productRepositoryFactory,
+        private readonly Helper                              $helper,
+        private readonly SubscribeCollection                 $subscribeCollection,
+        private readonly CustomerCollection                  $customers,
+        private readonly CustomerRepositoryInterfaceFactory  $customerRepositoryFactory,
+        private readonly CartInterfaceFactory                $quoteFactory,
+        private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
+        private readonly CartItemInterfaceFactory            $quoteItemFactory,
+        private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
+        private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
+        private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
+        private readonly OrderStatusHistoryInterfaceFactory  $orderStatusHistoryFactory,
+        private readonly OrderSender                         $orderSender
     )
     {
     }
@@ -91,7 +89,7 @@ class ReOrder
     private function getCustomerData(): void
     {
         foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
-            $this->customersData[$customer->getEntityId()] = $customer;
+            $this->customersData[$customer->getData('entity_id')] = $customer;
         }
     }
 
@@ -165,14 +163,16 @@ class ReOrder
     private function setOrderItems(array $itemIds, int $customerId): ?Quote
     {
         foreach ($itemIds as $itemId) {
-            $orderItem = $this->getOrderItem()->get($itemId);
-            $quoteItem = $this->getQuoteItem()
+            $orderItem = $this->orderItemRepositoryFactory->create()->get($itemId);
+            $quoteItem = $this->quoteItemFactory->create()
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
-            $quote = $this->getQuote($customerId)->addItem(
-                $this->setOptionsAndAttributes($orderItem, $quoteItem)
-            );
+            $quote = $this->quoteFactory->create()
+                ->setCustomerId($customerId)
+                ->addItem(
+                    $this->setOptionsAndAttributes($orderItem, $quoteItem)
+                );
         }
 
         return (isset($quote)) ? $quote : null;
@@ -181,8 +181,6 @@ class ReOrder
     /**
      * @throws NoSuchEntityException
      * @throws LocalizedException
-     * @throws InputException
-     * @throws Exception
      */
     private function setCustomerOrder(int $customerId, array $itemIds): array
     {
@@ -196,15 +194,31 @@ class ReOrder
             $quote->assignCustomer($this->getCustomer($customerId))
                 ->setStoreId($this->customersData[$customerId]->getStoreId());
 
-            $this->getQuoteRepository()->save($quote);
-            $this->getOrderRepository()->save(
-                $this->getQuoteManagement()->submit($quote)
-            );
+            $this->quoteRepositoryFactory->create()
+                ->save($quote);
+            $order = $this->quoteManagementFactory->create()
+                ->submit($quote);
+            $this->getOrderRepository()->save($order);
+
+            $this->orderSender->send($order);
+            $this->addReorderNoteToOrder($order);
 
             return array_merge($result, $itemIds);
         }
 
         return $result;
+    }
+
+    private function addReorderNoteToOrder(OrderInterface $order): void
+    {
+        $order->addStatusHistory(
+            $this->orderStatusHistoryFactory->create()->setComment($this->helper->getSalesNote())
+                ->setEntityName(OrderStatusHistoryInterface::ENTITY_NAME)
+                ->setStatus('pending')
+                ->setIsCustomerNotified(false)
+        );
+
+        $this->getOrderRepository()->save($order);
     }
 
     private function setAddress(Quote $quote, int $customerId): Quote
@@ -225,14 +239,14 @@ class ReOrder
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
-            ->setShippingMethod($this::SHIPPING_METHOD);
+            ->setShippingMethod($this->helper->getShippingMethod());
 
         return $quote;
     }
 
     private function setPayment(Quote $quote): Quote
     {
-        $quote->getPayment()->setMethod(ReOrder::PAYMENT_METHOD);
+        $quote->getPayment()->setMethod($this->helper->getPaymentMethod());
         $quote->setPayment($quote->getPayment());
 
         return $quote;
@@ -247,34 +261,9 @@ class ReOrder
         return $this->customerRepositoryFactory->create()->getById($customerId);
     }
 
-    private function getQuote(int $customerId): Quote
-    {
-        return $this->quoteFactory->create()->setCustomerId($customerId);
-    }
-
-    private function getOrderItem(): OrderItemRepositoryInterface
-    {
-        return $this->orderItemRepositoryFactory->create();
-    }
-
-    private function getQuoteItem(): CartItemInterface
-    {
-        return $this->quoteItemFactory->create();
-    }
-
-    private function getQuoteRepository(): CartRepositoryInterface
-    {
-        return $this->quoteRepositoryFactory->create();
-    }
-
     private function getOrderRepository(): OrderRepositoryInterface
     {
         return $this->orderRepositoryFactory->create();
-    }
-
-    private function getQuoteManagement(): CartManagementInterface
-    {
-        return $this->quoteManagementFactory->create();
     }
 
 }

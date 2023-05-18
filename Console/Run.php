@@ -47,8 +47,9 @@ class Run extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
-        $output->writeln(print_r($this->reorder->execute(), true));
+        if ($count = count($this->reorder->execute())) {
+            $output->writeln("Set $count ReOrders");
+        }
 
         return 1;
     }
