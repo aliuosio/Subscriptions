@@ -16,6 +16,10 @@
                 <fieldset>general</fieldset>
                 <enabled>0</enabled>
                 <periods>1 week, 2 weeks, 3 weeks, 4 weeks</periods>
+                <customer_note>Your order has been successfully placed as a reorder.</customer_note>
+                <sales_note>This order is a reorder.</sales_note>
+                <payment_method>checkmo</payment_method>
+                <shipping_method>flatrate_flatrate</shipping_method>
             </subscribable>
         </system>
     </default>
