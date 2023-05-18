@@ -26,6 +26,22 @@
                         <field id="*/*/active">1</field>
                     </depends>
                 </field>
+                <field id="customer_note" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Customer Subject in Reorder Mail</label>
+                    <comment>E-Mail Subject for Customer on automatic ReOrder</comment>
+                    <depends>
+                        <field id="*/*/active">1</field>
+                    </depends>
+                </field>
+                <field id="sales_note" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1"
+                       showInStore="1">
+                    <label>Sales Note on Reorder</label>
+                    <comment>Note added to Order in Tab comment history</comment>
+                    <depends>
+                        <field id="*/*/active">1</field>
+                    </depends>
+                </field>
             </group>
         </section>
     </system>
