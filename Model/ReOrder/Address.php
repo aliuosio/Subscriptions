@@ -16,7 +16,7 @@ class Address
 
     }
 
-    public function setter(Quote $quote, int $customerId): Quote
+    public function set(Quote $quote, int $customerId): Quote
     {
         $quote->getBillingAddress()->addData(
             $this->customer->getCustomerData()[$customerId]->getDefaultBillingAddress()->toArray()

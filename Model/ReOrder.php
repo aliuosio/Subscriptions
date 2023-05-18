@@ -14,11 +14,12 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
-use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
-use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
 use Osio\Subscriptions\Helper\Data as Helper;
+use Osio\Subscriptions\Model\ReOrder\Address;
+use Osio\Subscriptions\Model\ReOrder\Note;
+use Osio\Subscriptions\Model\ReOrder\Payment;
+use Osio\Subscriptions\Model\ReOrder\Shipping;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
@@ -43,8 +44,11 @@ class ReOrder
         private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
         private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
         private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
-        private readonly OrderStatusHistoryInterfaceFactory  $orderStatusHistoryFactory,
         private readonly OrderSender                         $orderSender,
+        private readonly Address                             $address,
+        private readonly Shipping                            $shipping,
+        private readonly Payment                             $payment,
+        private readonly Note                                $note
     )
     {
     }
@@ -160,9 +164,10 @@ class ReOrder
         $quote = $this->setOrderItems($itemIds, $customerId);
 
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setAddress($quote, $customerId);
-            $quote = $this->setShippingMethod($quote);
-            $quote = $this->setPayment($quote);
+            $quote = $this->address->set($quote, $customerId);
+            $quote = $this->shipping->setMethod($quote);
+            $quote = $this->payment->set($quote);
+
             $quote->assignCustomer($this->getCustomer($customerId))
                 ->setStoreId($this->customersData[$customerId]->getStoreId());
 
@@ -173,41 +178,12 @@ class ReOrder
             $this->getOrderRepository()->save($order);
 
             $this->orderSender->send($order);
-            $this->addReorderNoteToOrder($order);
+            $this->note->add($order);
 
             return array_merge($result, $itemIds);
         }
 
         return $result;
-    }
-
-    private function addReorderNoteToOrder(OrderInterface $order): void
-    {
-        $order->addStatusHistory(
-            $this->orderStatusHistoryFactory->create()->setComment($this->helper->getSalesNote())
-                ->setEntityName(OrderStatusHistoryInterface::ENTITY_NAME)
-                ->setStatus('pending')
-                ->setIsCustomerNotified(false)
-        );
-
-        $this->getOrderRepository()->save($order);
-    }
-
-    private function setShippingMethod(Quote $quote): Quote
-    {
-        $quote->getShippingAddress()->setCollectShippingRates(true)
-            ->collectShippingRates()
-            ->setShippingMethod($this->helper->getShippingMethod());
-
-        return $quote;
-    }
-
-    private function setPayment(Quote $quote): Quote
-    {
-        $quote->getPayment()->setMethod($this->helper->getPaymentMethod());
-        $quote->setPayment($quote->getPayment());
-
-        return $quote;
     }
 
     /**
