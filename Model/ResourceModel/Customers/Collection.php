@@ -55,19 +55,9 @@ class Collection extends customerCollection
         );
     }
 
-    private function getCustomerCollection(): AbstractDb|Customers
-    {
-        $this->getSelect()->join(
-            ['address' => 'customer_address_entity'],
-            'e.entity_id = address.parent_id',
-            ['address.*']
-        );
-        return $this->addFieldToSelect('entity_id');
-    }
-
     public function fetchCustomers(array $customerIds): customerCollection
     {
-        return $this->getCustomerCollection()->addFieldToSelect('entity_id')
+        return $this->addFieldToSelect('entity_id')
             ->addFieldToFilter('entity_id', ['in' => $customerIds]);
     }
 }

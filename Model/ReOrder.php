@@ -7,7 +7,8 @@ namespace Osio\Subscriptions\Model;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterfaceFactory;
-use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Api\CustomerRepositoryInterfaceFactory;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -27,9 +28,7 @@ use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
-use Magento\Quote\Api\PaymentMethodManagementInterface;
 use Magento\Quote\Api\PaymentMethodManagementInterfaceFactory;
-
 
 class ReOrder
 {
@@ -44,7 +43,7 @@ class ReOrder
         private readonly Helper                                  $helper,
         private readonly SubscribeCollection                     $subscribeCollection,
         private readonly CustomerCollection                      $customers,
-        private readonly CustomerRepositoryInterface             $customerRepository,
+        private readonly CustomerRepositoryInterfaceFactory      $customerRepositoryFactory,
         private readonly CartInterfaceFactory                    $quoteFactory,
         private readonly OrderItemRepositoryInterfaceFactory     $orderItemRepositoryFactory,
         private readonly CartItemInterfaceFactory                $quoteItemFactory,
@@ -56,18 +55,28 @@ class ReOrder
     {
     }
 
+
     /**
-     * @return array
+     * @throws NoSuchEntityException
      * @throws InputException
      * @throws LocalizedException
-     * @throws NoSuchEntityException
-     * @throws Exception
      */
     public function execute(): array
     {
-        $result = [];
         $this->getCustomerData();
 
+        return $this->run();
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws Exception
+     */
+    private function run(): array
+    {
+        $result = [];
         foreach ($this->subscribeCollection->getGroupedByCustomer() as $customerId => $itemIds) {
             $result = array_merge($result, $this->setCustomerOrder($customerId, $itemIds));
         }
@@ -181,11 +190,11 @@ class ReOrder
         $quote = $this->setOrderItems($itemIds, $customerId);
 
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setAddress($quote, $customerId);
+            $quote = $this->setAddress($quote, $this->getCustomer($customerId));
             $quote = $this->setShippingMethod($quote);
             $quote = $this->setPayment($quote);
-            $customer = $this->customerRepository->getById($customerId);
-            $quote->assignCustomer($customer)->setStoreId($this->customersData[$customerId]->getStoreId());
+            $quote->assignCustomer($this->getCustomer($customerId))
+                ->setStoreId($this->customersData[$customerId]->getStoreId());
 
             $this->getQuoteRepository()->save($quote);
             $this->getOrderRepository()->save(
@@ -198,15 +207,10 @@ class ReOrder
         return $result;
     }
 
-    private function setAddress(Quote $quote, int $customerId): Quote
+    private function setAddress(Quote $quote, CustomerInterface $customer): Quote
     {
-        $quote->getBillingAddress()->addData(
-            $this->customersData[$customerId]->getDefaultBillingAddress()->toArray()
-        );
-
-        $quote->getShippingAddress()->addData(
-            $this->customersData[$customerId]->getDefaultShippingAddress()->toArray()
-        );
+        $quote->getBillingAddress()->setId($customer->getDefaultBilling());
+        $quote->getShippingAddress()->setId($customer->getDefaultShipping());
 
         return $quote;
     }
@@ -215,30 +219,22 @@ class ReOrder
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
-            ->setShippingMethod(ReOrder::SHIPPING_METHOD);
+            ->setShippingMethod($this::SHIPPING_METHOD);
 
         return $quote;
     }
 
-    /**
-     * @throws LocalizedException
-     */
     private function setPayment(Quote $quote): Quote
     {
-        $this->getPaymentMethodManagement()->set($quote->getId(), [
-            'method' => ReOrder::PAYMENT_METHOD
-        ]);
-
-        $quote->getPayment()->setMethod(ReOrder::PAYMENT_METHOD)
-            ->importData(['method' => ReOrder::PAYMENT_METHOD]);
+        $quote->getPayment()->setMethod(ReOrder::PAYMENT_METHOD);
+        $quote->setPayment($quote->getPayment());
 
         return $quote;
     }
 
-
-    private function getPaymentMethodManagement(): PaymentMethodManagementInterface
+    private function getCustomer(int $customerId): CustomerInterface
     {
-        return $this->paymentMethodManagementFactory->create();
+        return $this->customerRepositoryFactory->create()->getById($customerId);
     }
 
     private function getQuote(int $customerId): Quote
