@@ -27,6 +27,8 @@ use Magento\Sales\Api\OrderItemRepositoryInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
+use Magento\Quote\Api\PaymentMethodManagementInterface;
+use Magento\Quote\Api\PaymentMethodManagementInterfaceFactory;
 
 
 class ReOrder
@@ -38,17 +40,18 @@ class ReOrder
     const SHIPPING_METHOD = 'flatrate_flatrate';
 
     public function __construct(
-        private readonly ProductRepositoryInterfaceFactory $productRepositoryFactory,
-        private readonly Helper                            $helper,
-        private readonly SubscribeCollection               $subscribeCollection,
-        private readonly CustomerCollection                $customers,
-        private readonly CustomerRepositoryInterface       $customerRepository,
-        private readonly CartInterfaceFactory                $quoteFactory,
-        private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
-        private readonly CartItemInterfaceFactory            $quoteItemFactory,
-        private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
-        private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
-        private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
+        private readonly ProductRepositoryInterfaceFactory       $productRepositoryFactory,
+        private readonly Helper                                  $helper,
+        private readonly SubscribeCollection                     $subscribeCollection,
+        private readonly CustomerCollection                      $customers,
+        private readonly CustomerRepositoryInterface             $customerRepository,
+        private readonly CartInterfaceFactory                    $quoteFactory,
+        private readonly OrderItemRepositoryInterfaceFactory     $orderItemRepositoryFactory,
+        private readonly CartItemInterfaceFactory                $quoteItemFactory,
+        private readonly CartRepositoryInterfaceFactory          $quoteRepositoryFactory,
+        private readonly OrderRepositoryInterfaceFactory         $orderRepositoryFactory,
+        private readonly CartManagementInterfaceFactory          $quoteManagementFactory,
+        private readonly PaymentMethodManagementInterfaceFactory $paymentMethodManagementFactory
     )
     {
     }
@@ -212,7 +215,7 @@ class ReOrder
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
-            ->setShippingMethod(Index::SHIPPING_METHOD);
+            ->setShippingMethod(ReOrder::SHIPPING_METHOD);
 
         return $quote;
     }
@@ -222,39 +225,48 @@ class ReOrder
      */
     private function setPayment(Quote $quote): Quote
     {
-        $quote->setPaymentMethod(Index::PAYMENT_METHOD);
-        $quote->setInventoryProcessed(false);
-        $quote->getPayment()->importData(['method' => Index::PAYMENT_METHOD]);
+        $this->getPaymentMethodManagement()->set($quote->getId(), [
+            'method' => ReOrder::PAYMENT_METHOD
+        ]);
+
+        $quote->getPayment()->setMethod(ReOrder::PAYMENT_METHOD)
+            ->importData(['method' => ReOrder::PAYMENT_METHOD]);
 
         return $quote;
     }
 
-    public function getQuote(int $customerId): Quote
+
+    private function getPaymentMethodManagement(): PaymentMethodManagementInterface
+    {
+        return $this->paymentMethodManagementFactory->create();
+    }
+
+    private function getQuote(int $customerId): Quote
     {
         return $this->quoteFactory->create()->setCustomerId($customerId);
     }
 
-    public function getOrderItem(): OrderItemRepositoryInterface
+    private function getOrderItem(): OrderItemRepositoryInterface
     {
         return $this->orderItemRepositoryFactory->create();
     }
 
-    public function getQuoteItem(): CartItemInterface
+    private function getQuoteItem(): CartItemInterface
     {
         return $this->quoteItemFactory->create();
     }
 
-    public function getQuoteRepository(): CartRepositoryInterface
+    private function getQuoteRepository(): CartRepositoryInterface
     {
         return $this->quoteRepositoryFactory->create();
     }
 
-    public function getOrderRepository(): OrderRepositoryInterface
+    private function getOrderRepository(): OrderRepositoryInterface
     {
         return $this->orderRepositoryFactory->create();
     }
 
-    public function getQuoteManagement(): CartManagementInterface
+    private function getQuoteManagement(): CartManagementInterface
     {
         return $this->quoteManagementFactory->create();
     }
