@@ -11,18 +11,19 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Exception\State\InvalidTransitionException;
 use Magento\Quote\Api\Data\CartItemInterface;
-use Magento\Quote\Api\PaymentMethodManagementInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
+use Osio\Subscriptions\Model\Customers;
 
 class Index
 {
+
     private array $customersData;
+
     const PAYMENT_METHOD = 'checkmo';
     const SHIPPING_METHOD = 'flatrate_flatrate';
 
@@ -165,37 +166,23 @@ class Index
     {
         $result = [];
         $quote = $this->setOrderItems($itemIds, $customerId);
+
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote->setStoreId($this->customersData[$customerId]->getStoreId());
             $quote = $this->setAddress($quote, $customerId);
             $quote = $this->setShippingMethod($quote);
+            $quote = $this->setPayment($quote);
             $customer = $this->customerRepository->getById($customerId);
-            $quote->setCurrency()->assignCustomer($customer);
+            $quote->assignCustomer($customer)->setStoreId($this->customersData[$customerId]->getStoreId());
+
             $this->reOrderfactories->getQuoteRepository()->save($quote);
-            $order = $this->reOrderfactories->getQuoteManagement()->submit($quote);
-            $order->setEmailSent(true);
-            $this->reOrderfactories->getOrderRepository()->save($order);
+            $this->reOrderfactories->getOrderRepository()->save(
+                $this->reOrderfactories->getQuoteManagement()->submit($quote)
+            );
 
             return array_merge($result, $itemIds);
         }
 
         return $result;
-    }
-
-    /**
-     * @throws LocalizedException
-     */
-    private function setShippingMethod(Quote $quote): Quote
-    {
-        $quote->getShippingAddress()->setCollectShippingRates(true)
-            ->collectShippingRates()
-            ->setShippingMethod(Index::SHIPPING_METHOD);
-
-        $quote->setPaymentMethod('checkmo'); //payment method, please verify checkmo must be enable from admin
-        $quote->setInventoryProcessed(false); //decrease item stock equal to qty
-        $quote->getPayment()->importData(['method' => 'checkmo']);
-
-        return $quote;
     }
 
     private function setAddress(Quote $quote, int $customerId): Quote
@@ -210,4 +197,26 @@ class Index
 
         return $quote;
     }
+
+    /**
+     * @throws LocalizedException
+     */
+    private function setShippingMethod(Quote $quote): Quote
+    {
+        $quote->getShippingAddress()->setCollectShippingRates(true)
+            ->collectShippingRates()
+            ->setShippingMethod(Index::SHIPPING_METHOD);
+
+        return $quote;
+    }
+
+    private function setPayment(Quote $quote): Quote
+    {
+        $quote->setPaymentMethod(Index::PAYMENT_METHOD);
+        $quote->setInventoryProcessed(false);
+        $quote->getPayment()->importData(['method' => Index::PAYMENT_METHOD]);
+
+        return $quote;
+    }
+
 }
