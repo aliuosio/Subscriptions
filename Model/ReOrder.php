@@ -190,7 +190,7 @@ class ReOrder
         $quote = $this->setOrderItems($itemIds, $customerId);
 
         if (isset($quote) && isset($this->customersData[$customerId])) {
-            $quote = $this->setAddress($quote, $this->getCustomer($customerId));
+            $quote = $this->setAddress($quote, $customerId);
             $quote = $this->setShippingMethod($quote);
             $quote = $this->setPayment($quote);
             $quote->assignCustomer($this->getCustomer($customerId))
@@ -207,13 +207,19 @@ class ReOrder
         return $result;
     }
 
-    private function setAddress(Quote $quote, CustomerInterface $customer): Quote
+    private function setAddress(Quote $quote, int $customerId): Quote
     {
-        $quote->getBillingAddress()->setId($customer->getDefaultBilling());
-        $quote->getShippingAddress()->setId($customer->getDefaultShipping());
+        $quote->getBillingAddress()->addData(
+            $this->customersData[$customerId]->getDefaultBillingAddress()->toArray()
+        );
+
+        $quote->getShippingAddress()->addData(
+            $this->customersData[$customerId]->getDefaultShippingAddress()->toArray()
+        );
 
         return $quote;
     }
+
 
     private function setShippingMethod(Quote $quote): Quote
     {
@@ -232,6 +238,10 @@ class ReOrder
         return $quote;
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
     private function getCustomer(int $customerId): CustomerInterface
     {
         return $this->customerRepositoryFactory->create()->getById($customerId);
