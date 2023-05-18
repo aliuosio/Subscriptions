@@ -11,14 +11,21 @@ use Osio\Subscriptions\Model\ReOrder;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 
 class Run extends Command
 {
+    /**
+     * @throws LocalizedException
+     */
     public function __construct(
         private readonly ReOrder $reorder,
+        private readonly State   $state,
         string                   $name = null
     )
     {
+        $this->state->setAreaCode(Area::AREA_ADMINHTML);
         parent::__construct($name);
     }
 
