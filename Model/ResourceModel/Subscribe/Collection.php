@@ -32,7 +32,8 @@ class Collection extends AbstractCollection
         ManagerInterface       $eventManager,
         AdapterInterface       $connection = null,
         AbstractDb             $resource = null
-    ) {
+    )
+    {
         $this->helper = $helper;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
     }

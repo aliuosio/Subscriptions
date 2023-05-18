@@ -15,7 +15,6 @@ use Osio\Subscriptions\Model\ReOrder\Payment;
 use Osio\Subscriptions\Model\ReOrder\Shipping;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Osio\Subscriptions\Model\ReOrder\Customer;
@@ -70,13 +69,14 @@ class ReOrder
         $result = [];
         $quote = $this->items->set($itemIds, $customerId);
 
-        if (isset($quote) && isset($this->customersData[$customerId])) {
+
+        if (isset($quote) && isset($this->customer->getCustomerData()[$customerId])) {
             $quote = $this->address->set($quote, $customerId);
             $quote = $this->shipping->set($quote);
             $quote = $this->payment->set($quote);
 
             $quote->assignCustomer($this->customer->get($customerId))
-                ->setStoreId($this->customersData[$customerId]->getStoreId());
+                ->setStoreId($this->customer->getCustomerData()[$customerId]->getStoreId());
 
             $this->quoteRepositoryFactory->create()
                 ->save($quote);
@@ -84,17 +84,13 @@ class ReOrder
                 ->submit($quote);
             $this->orderSender->send($order);
             $this->note->add($order);
-            $this->getOrderRepository()->save($order);
+            $this->orderRepositoryFactory->create()
+                ->save($order);
 
             return array_merge($result, $itemIds);
         }
 
         return $result;
-    }
-
-    private function getOrderRepository(): OrderRepositoryInterface
-    {
-        return $this->orderRepositoryFactory->create();
     }
 
 }

@@ -25,7 +25,6 @@ class Customer
     public function getCustomerData(): array
     {
         $customersData = [];
-
         foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
             $customersData[$customer->getData('entity_id')] = $customer;
         }

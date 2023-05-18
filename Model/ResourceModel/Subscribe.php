@@ -11,7 +11,8 @@ class Subscribe extends AbstractDb
 {
     public function __construct(
         Context $context
-    ) {
+    )
+    {
         parent::__construct($context);
     }
 
