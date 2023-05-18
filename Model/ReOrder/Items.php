@@ -14,6 +14,7 @@ use Magento\Quote\Api\Data\CartItemInterfaceFactory;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
+use Osio\Subscriptions\Helper\Data as Helper;
 
 class Items
 {
@@ -22,7 +23,8 @@ class Items
         private readonly CartInterfaceFactory                $quoteFactory,
         private readonly ProductRepositoryInterfaceFactory   $productRepositoryFactory,
         private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
-        private readonly CartItemInterfaceFactory            $quoteItemFactory
+        private readonly CartItemInterfaceFactory            $quoteItemFactory,
+        private readonly Helper                              $helper
     )
     {
     }
@@ -31,7 +33,7 @@ class Items
      * @throws NoSuchEntityException
      * @throws LocalizedException
      */
-    public function setOrderItems(array $itemIds, int $customerId): ?Quote
+    public function set(array $itemIds, int $customerId): ?Quote
     {
         foreach ($itemIds as $itemId) {
             $orderItem = $this->orderItemRepositoryFactory->create()->get($itemId);

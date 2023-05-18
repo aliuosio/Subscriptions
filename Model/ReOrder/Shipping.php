@@ -15,7 +15,7 @@ class Shipping
     {
     }
 
-    public function setMethod(Quote $quote): Quote
+    public function set(Quote $quote): Quote
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
