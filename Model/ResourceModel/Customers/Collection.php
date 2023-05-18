@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Model;
+namespace Osio\Subscriptions\Model\ResourceModel\Customers;
 
 use Magento\Customer\Model\ResourceModel\Customer\Collection as customerCollection;
 use Magento\Eav\Model\Config;
@@ -19,7 +19,7 @@ use Magento\Framework\Model\ResourceModel\Db\VersionControl\Snapshot;
 use Magento\Framework\Validator\UniversalFactory;
 use Psr\Log\LoggerInterface;
 
-class Customers extends customerCollection
+class Collection extends customerCollection
 {
 
     public function __construct(
@@ -67,7 +67,7 @@ class Customers extends customerCollection
 
     public function fetchCustomers(array $customerIds): customerCollection
     {
-       return $this->getCustomerCollection()->addFieldToSelect('entity_id')
+        return $this->getCustomerCollection()->addFieldToSelect('entity_id')
             ->addFieldToFilter('entity_id', ['in' => $customerIds]);
     }
 }

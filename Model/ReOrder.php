@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Osio\Subscriptions\Model\ReOrder;
+namespace Osio\Subscriptions\Model;
 
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -15,11 +15,21 @@ use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderItemInterface;
 use Osio\Subscriptions\Helper\Data as Helper;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe\CollectionFactory;
-use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection;
-use Osio\Subscriptions\Model\Customers;
+use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
+use Osio\Subscriptions\Model\ResourceModel\Customers\Collection as CustomerCollection;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Quote\Api\CartManagementInterfaceFactory;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\CartRepositoryInterfaceFactory;
+use Magento\Quote\Api\Data\CartInterfaceFactory;
+use Magento\Quote\Api\Data\CartItemInterfaceFactory;
+use Magento\Sales\Api\OrderItemRepositoryInterface;
+use Magento\Sales\Api\OrderItemRepositoryInterfaceFactory;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
 
-class Index
+
+class ReOrder
 {
 
     private array $customersData;
@@ -30,10 +40,15 @@ class Index
     public function __construct(
         private readonly ProductRepositoryInterfaceFactory $productRepositoryFactory,
         private readonly Helper                            $helper,
-        private readonly Factories                         $reOrderfactories,
-        private readonly CollectionFactory                 $collectionFactory,
-        private readonly Customers                         $customers,
-        private readonly CustomerRepositoryInterface       $customerRepository
+        private readonly SubscribeCollection               $subscribeCollection,
+        private readonly CustomerCollection                $customers,
+        private readonly CustomerRepositoryInterface       $customerRepository,
+        private readonly CartInterfaceFactory                $quoteFactory,
+        private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
+        private readonly CartItemInterfaceFactory            $quoteItemFactory,
+        private readonly CartRepositoryInterfaceFactory      $quoteRepositoryFactory,
+        private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
+        private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
     )
     {
     }
@@ -50,12 +65,12 @@ class Index
         $result = [];
         $this->getCustomerData();
 
-        foreach ($this->getCollection()->getGroupedByCustomer() as $customerId => $itemIds) {
+        foreach ($this->subscribeCollection->getGroupedByCustomer() as $customerId => $itemIds) {
             $result = array_merge($result, $this->setCustomerOrder($customerId, $itemIds));
         }
 
         if (!empty($result)) {
-            $this->getCollection()->updateSubscriptionsAfterReOrder($result);
+            $this->subscribeCollection->updateSubscriptionsAfterReOrder($result);
         }
 
         return $result;
@@ -70,12 +85,7 @@ class Index
 
     private function getCustomerIds(): array
     {
-        return array_keys($this->getCollection()->getGroupedByCustomer());
-    }
-
-    private function getCollection(): Collection
-    {
-        return $this->collectionFactory->create();
+        return array_keys($this->subscribeCollection->getGroupedByCustomer());
     }
 
     /**
@@ -143,12 +153,12 @@ class Index
     private function setOrderItems(array $itemIds, int $customerId): ?Quote
     {
         foreach ($itemIds as $itemId) {
-            $orderItem = $this->reOrderfactories->getOrderItem()->get($itemId);
-            $quoteItem = $this->reOrderfactories->getQuoteItem()
+            $orderItem = $this->getOrderItem()->get($itemId);
+            $quoteItem = $this->getQuoteItem()
                 ->setProduct($this->getProductForItem($orderItem))
                 ->setQty($orderItem->getQtyOrdered())
                 ->setPrice($orderItem->getPrice());
-            $quote = $this->reOrderfactories->getQuote($customerId)->addItem(
+            $quote = $this->getQuote($customerId)->addItem(
                 $this->setOptionsAndAttributes($orderItem, $quoteItem)
             );
         }
@@ -174,9 +184,9 @@ class Index
             $customer = $this->customerRepository->getById($customerId);
             $quote->assignCustomer($customer)->setStoreId($this->customersData[$customerId]->getStoreId());
 
-            $this->reOrderfactories->getQuoteRepository()->save($quote);
-            $this->reOrderfactories->getOrderRepository()->save(
-                $this->reOrderfactories->getQuoteManagement()->submit($quote)
+            $this->getQuoteRepository()->save($quote);
+            $this->getOrderRepository()->save(
+                $this->getQuoteManagement()->submit($quote)
             );
 
             return array_merge($result, $itemIds);
@@ -198,9 +208,6 @@ class Index
         return $quote;
     }
 
-    /**
-     * @throws LocalizedException
-     */
     private function setShippingMethod(Quote $quote): Quote
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
@@ -210,6 +217,9 @@ class Index
         return $quote;
     }
 
+    /**
+     * @throws LocalizedException
+     */
     private function setPayment(Quote $quote): Quote
     {
         $quote->setPaymentMethod(Index::PAYMENT_METHOD);
@@ -217,6 +227,36 @@ class Index
         $quote->getPayment()->importData(['method' => Index::PAYMENT_METHOD]);
 
         return $quote;
+    }
+
+    public function getQuote(int $customerId): Quote
+    {
+        return $this->quoteFactory->create()->setCustomerId($customerId);
+    }
+
+    public function getOrderItem(): OrderItemRepositoryInterface
+    {
+        return $this->orderItemRepositoryFactory->create();
+    }
+
+    public function getQuoteItem(): CartItemInterface
+    {
+        return $this->quoteItemFactory->create();
+    }
+
+    public function getQuoteRepository(): CartRepositoryInterface
+    {
+        return $this->quoteRepositoryFactory->create();
+    }
+
+    public function getOrderRepository(): OrderRepositoryInterface
+    {
+        return $this->orderRepositoryFactory->create();
+    }
+
+    public function getQuoteManagement(): CartManagementInterface
+    {
+        return $this->quoteManagementFactory->create();
     }
 
 }
