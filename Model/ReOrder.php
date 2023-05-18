@@ -20,7 +20,6 @@ use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
 use Osio\Subscriptions\Helper\Data as Helper;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
-use Osio\Subscriptions\Model\ResourceModel\Customers\Collection as CustomerCollection;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
 use Magento\Quote\Api\Data\CartInterfaceFactory;
@@ -33,13 +32,10 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 class ReOrder
 {
 
-    private array $customersData;
-
     public function __construct(
         private readonly ProductRepositoryInterfaceFactory   $productRepositoryFactory,
         private readonly Helper                              $helper,
         private readonly SubscribeCollection                 $subscribeCollection,
-        private readonly CustomerCollection                  $customers,
         private readonly CustomerRepositoryInterfaceFactory  $customerRepositoryFactory,
         private readonly CartInterfaceFactory                $quoteFactory,
         private readonly OrderItemRepositoryInterfaceFactory $orderItemRepositoryFactory,
@@ -48,7 +44,7 @@ class ReOrder
         private readonly OrderRepositoryInterfaceFactory     $orderRepositoryFactory,
         private readonly CartManagementInterfaceFactory      $quoteManagementFactory,
         private readonly OrderStatusHistoryInterfaceFactory  $orderStatusHistoryFactory,
-        private readonly OrderSender                         $orderSender
+        private readonly OrderSender                         $orderSender,
     )
     {
     }
@@ -58,21 +54,9 @@ class ReOrder
      * @throws NoSuchEntityException
      * @throws InputException
      * @throws LocalizedException
-     */
-    public function execute(): array
-    {
-        $this->getCustomerData();
-
-        return $this->run();
-    }
-
-    /**
-     * @throws NoSuchEntityException
-     * @throws InputException
-     * @throws LocalizedException
      * @throws Exception
      */
-    private function run(): array
+    public function execute(): array
     {
         $result = [];
         foreach ($this->subscribeCollection->getGroupedByCustomer() as $customerId => $itemIds) {
@@ -84,18 +68,6 @@ class ReOrder
         }
 
         return $result;
-    }
-
-    private function getCustomerData(): void
-    {
-        foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
-            $this->customersData[$customer->getData('entity_id')] = $customer;
-        }
-    }
-
-    private function getCustomerIds(): array
-    {
-        return array_keys($this->subscribeCollection->getGroupedByCustomer());
     }
 
     /**
@@ -220,20 +192,6 @@ class ReOrder
 
         $this->getOrderRepository()->save($order);
     }
-
-    private function setAddress(Quote $quote, int $customerId): Quote
-    {
-        $quote->getBillingAddress()->addData(
-            $this->customersData[$customerId]->getDefaultBillingAddress()->toArray()
-        );
-
-        $quote->getShippingAddress()->addData(
-            $this->customersData[$customerId]->getDefaultShippingAddress()->toArray()
-        );
-
-        return $quote;
-    }
-
 
     private function setShippingMethod(Quote $quote): Quote
     {
