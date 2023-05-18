@@ -184,6 +184,7 @@ class ReOrder
             $quote = $this->setAddress($quote, $customerId);
             $quote = $this->setShippingMethod($quote);
             $quote = $this->setPayment($quote);
+
             $customer = $this->customerRepository->getById($customerId);
             $quote->assignCustomer($customer)->setStoreId($this->customersData[$customerId]->getStoreId());
 
@@ -215,7 +216,7 @@ class ReOrder
     {
         $quote->getShippingAddress()->setCollectShippingRates(true)
             ->collectShippingRates()
-            ->setShippingMethod(ReOrder::SHIPPING_METHOD);
+            ->setShippingMethod($this::SHIPPING_METHOD);
 
         return $quote;
     }
@@ -225,16 +226,11 @@ class ReOrder
      */
     private function setPayment(Quote $quote): Quote
     {
-        $this->getPaymentMethodManagement()->set($quote->getId(), [
-            'method' => ReOrder::PAYMENT_METHOD
-        ]);
-
-        $quote->getPayment()->setMethod(ReOrder::PAYMENT_METHOD)
-            ->importData(['method' => ReOrder::PAYMENT_METHOD]);
+        $quote->setPayment($quote->getPayment()->setMethod($this::PAYMENT_METHOD));
+        $quote->getPayment()->importData(['method' => $this::PAYMENT_METHOD]);
 
         return $quote;
     }
-
 
     private function getPaymentMethodManagement(): PaymentMethodManagementInterface
     {
