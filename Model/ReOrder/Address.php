@@ -8,22 +8,14 @@ use Magento\Quote\Model\Quote;
 
 class Address
 {
-
-    public function __construct(
-        private readonly Customer $customer
-    )
-    {
-
-    }
-
-    public function set(Quote $quote, int $customerId): Quote
+    public function set(Customer $customer, Quote $quote, int $customerId): Quote
     {
         $quote->getBillingAddress()->addData(
-            $this->customer->getCustomerData()[$customerId]->getDefaultBillingAddress()->toArray()
+            $customer->getCustomerData()[$customerId]->getDefaultBillingAddress()->toArray()
         );
 
         $quote->getShippingAddress()->addData(
-            $this->customer->getCustomerData()[$customerId]->getDefaultShippingAddress()->toArray()
+            $customer->getCustomerData()[$customerId]->getDefaultShippingAddress()->toArray()
         );
 
         return $quote;

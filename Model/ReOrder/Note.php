@@ -7,25 +7,22 @@ namespace Osio\Subscriptions\Model\ReOrder;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
-use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
-use Osio\Subscriptions\Helper\Data as Helper;
 
 class Note
 {
-
     public function __construct(
-        private readonly Helper                             $helper,
         private readonly OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory,
     )
     {
     }
 
-    public function add(OrderInterface $order): void
+    public function add(OrderInterface $order, string $message, string $status): OrderInterface
     {
-        $order->addStatusHistory(
-            $this->orderStatusHistoryFactory->create()->setComment($this->helper->getSalesNote())
+        return $order->addStatusHistory(
+            $this->orderStatusHistoryFactory->create()
+                ->setComment($message)
                 ->setEntityName(OrderStatusHistoryInterface::ENTITY_NAME)
-                ->setStatus('pending')
+                ->setStatus($status)
                 ->setIsCustomerNotified(false)
         );
     }

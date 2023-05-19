@@ -26,22 +26,22 @@ class   Data extends AbstractHelper
         parent::__construct($context);
     }
 
-    public function getCustomerNote(): mixed
+    public function getCustomerNote(): string
     {
         return $this->scopeConfig->getValue($this::CUSTOMER_NOTE);
     }
 
-    public function getShippingMethod(): mixed
+    public function getShippingMethod(): string
     {
         return $this->scopeConfig->getValue($this::SHIPPING_METHOD);
     }
 
-    public function getPaymentMethod(): mixed
+    public function getPaymentMethod(): string
     {
         return $this->scopeConfig->getValue($this::PAYMENT_METHOD);
     }
 
-    public function getSalesNote(): mixed
+    public function getSalesNote(): string
     {
         return $this->scopeConfig->getValue($this::SALES_NOTE);
     }
@@ -51,17 +51,22 @@ class   Data extends AbstractHelper
         return (bool)$this->scopeConfig->getValue($this::ENABLED);
     }
 
-    public function getTitle(): mixed
+    public function getTitle(): string
     {
         return $this->scopeConfig->getValue($this::TITLE);
     }
 
-    public function getCode(): mixed
+    public function getCode(): string
     {
         return $this->scopeConfig->getValue($this::CODE);
     }
 
-    public function getFieldset(): mixed
+    public function getReOrderStatus(): string
+    {
+        return 'pending';
+    }
+
+    public function getFieldset(): string
     {
         return $this->scopeConfig->getValue($this::FIELDSET);
     }

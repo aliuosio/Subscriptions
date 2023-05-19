@@ -9,18 +9,22 @@ use Magento\Customer\Model\Customer\Interceptor;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Osio\Subscriptions\Api\ReOrderInterface;
 use Osio\Subscriptions\Model\ReOrder\Address;
+use Osio\Subscriptions\Model\ReOrder\History;
 use Osio\Subscriptions\Model\ReOrder\Items;
 use Osio\Subscriptions\Model\ReOrder\Note;
 use Osio\Subscriptions\Model\ReOrder\Payment;
 use Osio\Subscriptions\Model\ReOrder\Shipping;
+use Osio\Subscriptions\Model\ReOrder\Customer;
 use Magento\Quote\Api\CartManagementInterfaceFactory;
 use Magento\Quote\Api\CartRepositoryInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterfaceFactory;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
-use Osio\Subscriptions\Model\ReOrder\Customer;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
+use Osio\Subscriptions\Helper\Data as Helper;
 
 class ReOrder implements ReOrderInterface
 {
@@ -37,6 +41,8 @@ class ReOrder implements ReOrderInterface
         private readonly Items                           $items,
         private readonly Customer                        $customer,
         private readonly SubscribeCollection             $subscribeCollection,
+        private readonly History                         $history,
+        private readonly Helper                          $helper
     )
     {
     }
@@ -68,32 +74,20 @@ class ReOrder implements ReOrderInterface
      */
     private function set(int $customerId, array $itemIds): array
     {
-        $data = [];
         $result = [];
         $quote = $this->items->set($itemIds, $customerId);
 
         if (isset($quote) && $this->getCustomer($customerId) instanceof Interceptor) {
-            $quote = $this->address->set($quote, $customerId);
-            $quote = $this->shipping->set($quote);
-            $quote = $this->payment->set($quote);
-
+            $quote = $this->address->set($this->customer, $quote, $customerId);
+            $quote = $this->shipping->set($quote, $this->helper->getShippingMethod());
+            $quote = $this->payment->set($quote, $this->helper->getPaymentMethod());
             $quote->assignCustomer($this->customer->get($customerId))
                 ->setStoreId($this->getCustomer($customerId)->getStoreId());
 
-            $this->quoteRepositoryFactory->create()
-                ->save($quote);
-            $order = $this->quoteManagementFactory->create()
-                ->submit($quote);
+            $order = $this->save($quote);
+            $order = $this->note->add($order, $this->helper->getSalesNote(), $this->helper->getReOrderStatus());
             $this->orderSender->send($order);
-            $this->note->add($order);
-            $this->orderRepositoryFactory->create()
-                ->save($order);
-
-            foreach ($itemIds as $itemId) {
-                $data[] = ['item_id' => $itemId, 'new_order_id' => $order->getEntityId()];
-            }
-
-            $this->setHistory($data);
+            $this->history->save($this->subscribeCollection, $order, $itemIds);
 
             return array_merge($result, $itemIds);
         }
@@ -101,15 +95,20 @@ class ReOrder implements ReOrderInterface
         return $result;
     }
 
-    private function setHistory(array $data): void
+    /**
+     * @throws LocalizedException
+     */
+    private function save(CartInterface $quote): OrderInterface
     {
-        $this->subscribeCollection->getConnection()
-            ->insertMultiple('subscriptions_history', $data);
+        $this->quoteRepositoryFactory->create()->save($quote);
+        $order = $this->quoteManagementFactory->create()->submit($quote);
+
+        return $this->orderRepositoryFactory->create()->save($order);
     }
 
     private function getCustomer(int $customerId): Interceptor
     {
-        return $this->customer->getCustomerData()[$customerId];
+        return $this->customer->getCustomerData($this->subscribeCollection)[$customerId];
     }
 
 }

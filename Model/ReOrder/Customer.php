@@ -15,17 +15,16 @@ class Customer
 {
 
     public function __construct(
-        private readonly SubscribeCollection                $subscribeCollection,
         private readonly CustomerCollection                 $customers,
         private readonly CustomerRepositoryInterfaceFactory $customerRepositoryFactory,
     )
     {
     }
 
-    public function getCustomerData(): array
+    public function getCustomerData(SubscribeCollection $subscribeCollection): array
     {
         $customersData = [];
-        foreach ($this->customers->fetchCustomers($this->getCustomerIds())->getItems() as $customer) {
+        foreach ($this->customers->fetchCustomers($this->getCustomerIds($subscribeCollection))->getItems() as $customer) {
             $customersData[$customer->getData('entity_id')] = $customer;
         }
 
@@ -33,9 +32,9 @@ class Customer
     }
 
 
-    private function getCustomerIds(): array
+    private function getCustomerIds(SubscribeCollection $subscribeCollection): array
     {
-        return array_keys($this->subscribeCollection->getGroupedByCustomer());
+        return array_keys($subscribeCollection->getGroupedByCustomer());
     }
 
     /**
