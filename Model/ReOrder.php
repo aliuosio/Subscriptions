@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Osio\Subscriptions\Model;
 
 use Exception;
+use Magento\Customer\Model\Customer\Interceptor;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -67,17 +68,17 @@ class ReOrder implements ReOrderInterface
      */
     private function set(int $customerId, array $itemIds): array
     {
+        $data = [];
         $result = [];
         $quote = $this->items->set($itemIds, $customerId);
 
-
-        if (isset($quote) && isset($this->customer->getCustomerData()[$customerId])) {
+        if (isset($quote) && $this->getCustomer($customerId) instanceof Interceptor) {
             $quote = $this->address->set($quote, $customerId);
             $quote = $this->shipping->set($quote);
             $quote = $this->payment->set($quote);
 
             $quote->assignCustomer($this->customer->get($customerId))
-                ->setStoreId($this->customer->getCustomerData()[$customerId]->getStoreId());
+                ->setStoreId($this->getCustomer($customerId)->getStoreId());
 
             $this->quoteRepositoryFactory->create()
                 ->save($quote);
@@ -88,10 +89,27 @@ class ReOrder implements ReOrderInterface
             $this->orderRepositoryFactory->create()
                 ->save($order);
 
+            foreach ($itemIds as $itemId) {
+                $data[] = ['item_id' => $itemId, 'new_order_id' => $order->getEntityId()];
+            }
+
+            $this->setHistory($data);
+
             return array_merge($result, $itemIds);
         }
 
         return $result;
+    }
+
+    private function setHistory(array $data): void
+    {
+        $this->subscribeCollection->getConnection()
+            ->insertMultiple('subscriptions_history', $data);
+    }
+
+    private function getCustomer(int $customerId): Interceptor
+    {
+        return $this->customer->getCustomerData()[$customerId];
     }
 
 }
