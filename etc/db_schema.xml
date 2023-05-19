@@ -22,4 +22,17 @@
             <column name="item_id"/>
         </constraint>
     </table>
+    <table name="subscriptions_order_history">
+        <column name="id" xsi:type="int" padding="10" unsigned="true" nullable="false" identity="true"
+                comment="Entity Id"/>
+        <column name="subscriptions_id" xsi:type="int" padding="10" unsigned="true" nullable="false"
+                comment="Table subscriptions reference"/>
+        <column name="order_date" xsi:type="datetime" nullable="true" comment="last order date "/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_SUBSCRIPTIONS_ID" table="subscriptions_order_history"
+                    column="subscriptions_id"
+                    referenceTable="subscriptions" referenceColumn="id"/>
+    </table>
 </schema>
