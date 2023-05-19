@@ -7,6 +7,7 @@ namespace Osio\Subscriptions\Cron;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Osio\Subscriptions\Api\ReOrderInterface;
 use Osio\Subscriptions\Model\ReOrder;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
@@ -14,7 +15,7 @@ use Magento\Framework\App\Area;
 class Run
 {
     public function __construct(
-        private readonly ReOrder $reorder,
+        private readonly ReOrderInterface $reorder,
         private readonly State   $state,
         string                   $name = null
     )

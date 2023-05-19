@@ -8,6 +8,7 @@ use Exception;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Osio\Subscriptions\Api\ReOrderInterface;
 use Osio\Subscriptions\Model\ReOrder\Address;
 use Osio\Subscriptions\Model\ReOrder\Items;
 use Osio\Subscriptions\Model\ReOrder\Note;
@@ -20,7 +21,7 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Osio\Subscriptions\Model\ReOrder\Customer;
 use Osio\Subscriptions\Model\ResourceModel\Subscribe\Collection as SubscribeCollection;
 
-class ReOrder
+class ReOrder implements ReOrderInterface
 {
 
     public function __construct(

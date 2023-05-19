@@ -2,6 +2,7 @@
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Osio\Subscriptions\Api\ReOrderInterface" type="Osio\Subscriptions\Model\ReOrder" />
     <type name="Magento\Catalog\Model\Product">
         <plugin name="subscriptions_set_subscribe_product_options"
                 type="Osio\Subscriptions\Plugins\SetSubscribeProductOptions"/>
