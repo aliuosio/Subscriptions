@@ -78,7 +78,7 @@ class ReOrder implements ReOrderInterface
         $quote = $this->items->set($itemIds, $customerId);
 
         if (isset($quote) && $this->getCustomer($customerId) instanceof Interceptor) {
-            $quote = $this->address->set($this->customer, $quote, $customerId);
+            $quote = $this->address->set($this->subscribeCollection, $this->customer, $quote, $customerId);
             $quote = $this->shipping->set($quote, $this->helper->getShippingMethod());
             $quote = $this->payment->set($quote, $this->helper->getPaymentMethod());
             $quote->assignCustomer($this->customer->get($customerId))
