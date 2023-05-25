@@ -1,4 +1,4 @@
-Autoreorder Module
+# Autoreorder Module
 The Autoreorder module for Magento 2 allows customers to set up automatic reorder of their preferred products at specified intervals.
 
 ## Features
