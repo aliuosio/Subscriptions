@@ -27,7 +27,7 @@ To configure the Autoreorder module, follow these steps:
 2. Go to **Stores** > **Configuration** > **System**. > **Product Subscriptions**
 Here you set general intervals
 3. Save the configuration changes
-4. Edit the Backend Product Page and mark the product by checking the attribute Subscribable.
+4. Edit the Backend Product Page and mark the product by checking the attribute  Subscribable.
 5. Under the options of that product you set individual intervals to reorder 
 
 
