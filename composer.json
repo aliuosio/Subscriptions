@@ -1,7 +1,7 @@
 {
   "name": "osio/module-subscriptions",
   "version": "0.1.0",
-  "description": "N/A",
+  "description": "Autoreorder after selected period of time",
   "type": "magento2-module",
   "require": {
     "php": "~8.1.0",
